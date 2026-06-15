@@ -37,3 +37,17 @@ An AI-powered farming assistant designed to help farmers with weather updates, c
 Ankita Varat
 BE Information Technology (2025)
 
+## Screenshots
+
+### Main UI
+![Main UI](screenshots/home.png)
+
+### Weather Feature
+![Weather](screenshots/LiveWeather.png)
+
+### Live Market Prices
+![Market Prices](screenshots/LiveMarketing.png)
+
+### Disease Detection
+![Disease Detection](screenshots/Diseasedetection.png)
+
