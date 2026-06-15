@@ -40,7 +40,7 @@ BE Information Technology (2025)
 ## Screenshots
 
 ### Main UI
-![Main UI](screenshots/home.png)
+![Main UI](screenshots/Homepage.png)
 
 ### Weather Feature
 ![Weather](screenshots/LiveWeather.png)
@@ -50,4 +50,8 @@ BE Information Technology (2025)
 
 ### Disease Detection
 ![Disease Detection](screenshots/Diseasedetection.png)
+
+### AI Answer
+![AI Answer](screenshots/AIanswer.png)
+
 
