@@ -1,0 +1,10 @@
+Flask
+Flask-Cors
+requests
+opencv-python
+numpy
+gTTS
+pygame
+SpeechRecognition
+groq
+python-dotenv
