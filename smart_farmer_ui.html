@@ -562,40 +562,6 @@
     }
   }
 
-  // Market Price
-  async function getMarketPrice(crop, lang) {
-    try {
-      const keyRes = await fetch(`${BACKEND_URL}/market-key`);
-      const keyData = await keyRes.json();
-      const API_KEY = keyData.key;
-      const url = `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${API_KEY}&format=json&limit=5&filters%5Bstate.keyword%5D=Maharashtra&filters%5Bcommodity%5D=${encodeURIComponent(crop)}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (!data.records || data.records.length === 0) {
-        return lang === 'marathi' ? '❌ या पिकाचा भाव सापडला नाही.' : '❌ Price not found for this crop.';
-      }
-      let result = lang === 'marathi' ? '🌾 लाईव्ह बाजारभाव\n\n' : '🌾 Live Market Price\n\n';
-      data.records.forEach(item => {
-        if (lang === 'marathi') {
-          result += `🌾 पीक : ${item.commodity}\n`;
-          result += `📍 बाजार : ${item.market}\n`;
-          result += `🗺 जिल्हा : ${item.district}\n`;
-          result += `📅 तारीख : ${item.arrival_date}\n`;
-          result += `💰 किमान : ₹${item.min_price} | कमाल : ₹${item.max_price} | सरासरी : ₹${item.modal_price} प्रति क्विंटल\n\n`;
-        } else {
-          result += `🌾 Crop : ${item.commodity}\n`;
-          result += `📍 Market : ${item.market}\n`;
-          result += `🗺 District : ${item.district}\n`;
-          result += `📅 Date : ${item.arrival_date}\n`;
-          result += `💰 Min : ₹${item.min_price} | Max : ₹${item.max_price} | Modal : ₹${item.modal_price} per Quintal\n\n`;
-        }
-      });
-      return result;
-    } catch (e) {
-      return lang === 'marathi' ? '❌ बाजारभाव माहिती उपलब्ध नाही.' : '❌ Market price not available.';
-    }
-  }
-
   async function handleSend() {
     if (handleSend.running) return;
     handleSend.running = true;
@@ -610,30 +576,6 @@
        'havaman','lagvad','rog','pana','udya','aaj','shetkari']
       .some(w => question.toLowerCase().includes(w));
     const lang = isMarathi ? 'marathi' : 'english';
-
-    // Market price check
-    if (question.includes('market') || question.includes('bhav') ||
-        question.includes('price') || question.includes('rate') ||
-        question.includes('mandi')) {
-
-      const crop = question.includes('tomato') ? 'Tomato' :
-                   question.includes('onion') || question.includes('kanda') ? 'Onion' :
-                   question.includes('wheat') || question.includes('gahu') ? 'Wheat' :
-                   question.includes('cotton') || question.includes('kapus') ? 'Cotton(Unginned)' :
-                   question.includes('rice') || question.includes('bhat') ? 'Rice' : null;
-
-      if (crop) {
-        addMessage(question, 'user');
-        inp.value = ''; inp.focus();
-        showTyping();
-        const price = await getMarketPrice(crop, lang);
-        removeTyping();
-        addMessage(price, 'bot');
-        try { speakAnswer(price); } catch(e) {}
-        handleSend.running = false;
-        return;
-      }
-    }
 
     addMessage(question, 'user');
     inp.value = ''; inp.focus();
