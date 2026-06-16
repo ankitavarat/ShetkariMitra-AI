@@ -80,11 +80,6 @@ def detect():
     return jsonify({"result": result})
 
 
-
-@app.route("/market-key", methods=["GET"])
-def market_key():
-    return jsonify({"key": marketing_key})
-
 # ─── RUN ─────────────────────────────────────────────
 if __name__ == "__main__":
     print("=" * 50)
