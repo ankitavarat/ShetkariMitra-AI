@@ -3,6 +3,15 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+config.py
+.env
+voice.mp3
+output.wav
+__pycache__/
+*.pyc
+*.pyo
+test_api.py
+
 # C extensions
 *.so
 
