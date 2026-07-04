@@ -1,10 +1,7 @@
-Flask
-Flask-Cors
+flask
+flask-cors
 requests
-opencv-python
-numpy
-gTTS
-pygame
-SpeechRecognition
+opencv-python-headless
 groq
+numpy
 python-dotenv
