@@ -14,13 +14,13 @@ import tempfile
 from config import  marketing_key
 
 
-# from backend import (
-#     chatbot_response,
-#     get_weather,
-#     detect_disease,
-#     detect_language,
-#     get_weather_by_coords
-# )
+from backend import (
+    chatbot_response,
+    get_weather,
+    detect_disease,
+    detect_language,
+    get_weather_by_coords
+)
 
 app = Flask(__name__)
 CORS(app)  # Allows HTML file to call this server
