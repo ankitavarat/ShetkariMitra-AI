@@ -19,6 +19,7 @@ from backend import (
     get_weather,
     detect_disease,
     detect_language,
+    get_weather_by_coords
 )
 
 app = Flask(__name__)
@@ -41,7 +42,7 @@ def chat():
 # ─── WEATHER ENDPOINT ────────────────────────────────
 @app.route("/weather", methods=["GET"])
 def weather():
-    city = request.args.get("city", "Pune")
+    city = request.args.get("city", "ahmednagar")
     language = request.args.get("lang", "english")
 
     data = get_weather(city, language)
@@ -49,6 +50,18 @@ def weather():
     if data is None:
         return jsonify({"error": "City not found"}), 404
 
+    return jsonify(data)
+
+@app.route("/weather-coords", methods=["GET"])
+def weather_coords():
+    lat = request.args.get("lat")
+    lon = request.args.get("lon")
+    
+    data = get_weather_by_coords(lat, lon, "english")
+    
+    if data is None:
+        return jsonify({"error": "Weather not found"}), 404
+    
     return jsonify(data)
 
 
@@ -87,4 +100,4 @@ if __name__ == "__main__":
     print("   Running at: http://localhost:5000")
     print("   Open smart_farmer_ui.html in Chrome")
     print("=" * 50)
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000,threaded=True)
