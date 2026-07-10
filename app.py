@@ -25,6 +25,10 @@ from backend import (
 app = Flask(__name__)
 CORS(app)  # Allows HTML file to call this server
 
+@app.route("/")
+def home():
+    return "Smart Farmer Assistant is running successfully!"
+
 
 # ─── CHAT ENDPOINT ───────────────────────────────────
 @app.route("/chat", methods=["POST"])
