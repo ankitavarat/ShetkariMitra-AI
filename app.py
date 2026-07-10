@@ -105,4 +105,4 @@ if __name__ == "__main__":
     print("   Open smart_farmer_ui.html in Chrome")
     print("=" * 50)
     port = int(os.getenv("PORT", 5000))
-    app.run(debug=False, host="0.0.0.0", port=port, threaded=True)
+    app.run(debug=True, host="0.0.0.0", port=port, threaded=True)
