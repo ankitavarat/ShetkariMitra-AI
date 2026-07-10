@@ -2,63 +2,69 @@ from pyexpat import model
 import re
 from urllib import response
 
-import sounddevice as sd
-from scipy.io.wavfile import write
-import speech_recognition as sr
+# import sounddevice as sd
+# from scipy.io.wavfile import write
+# import speech_recognition as sr
 import numpy as np
-from gtts import gTTS
-import pygame as pygame
+# from gtts import gTTS
+# import pygame as pygame
 import requests
 import sqlite3
 import time
 import cv2
+import logging 
 from groq import Groq
 from config import api_key, groq_key, marketing_key
 groq_client = Groq(api_key=groq_key)
 
+logging.basicConfig(
+    filename="shetkarimitra.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-pygame.mixer.init()
+# pygame.mixer.init()
 
 
 # ---------------- SPEAK ----------------
-def speak(text):
+# def speak(text):
 
-    language = detect_language(text)
+# language = detect_language(text)
 
-    if language == "marathi":
+#     if language == "marathi":
 
-        lang_code = "mr"
+#         lang_code = "mr"
 
-    else:
+#     else:
 
-        lang_code = "en"
+#         lang_code = "en"
 
-    filename = f"voice_{int(time.time()*1000)}.mp3"   
+#     filename = f"voice_{int(time.time()*1000)}.mp3"   
 
-    tts = gTTS(
-        text=text,
-        lang=lang_code
-    )
+#     tts = gTTS(
+#         text=text,
+#         lang=lang_code
+#     )
 
-    filename = "voice.mp3"
+#     filename = "voice.mp3"
 
-    tts.save(filename)
-
-
-    pygame.mixer.music.load(filename)
-
-    pygame.mixer.music.play()
-
-    while pygame.mixer.music.get_busy():
-        pygame.time.Clock().tick(10)
-
-    pygame.mixer.music.unload()
+#     tts.save(filename)
 
 
-# ---------------- STOP SPEAKING ----------------
-def stop_speaking():
+#     pygame.mixer.music.load(filename)
 
-    pygame.mixer.music.stop()    
+#     pygame.mixer.music.play()
+
+#     while pygame.mixer.music.get_busy():
+#         pygame.time.Clock().tick(10)
+
+#     pygame.mixer.music.unload()
+
+
+# # ---------------- STOP SPEAKING ----------------
+# def stop_speaking():
+
+#     pygame.mixer.music.stop()    
 
 # ----------------LANGUAGE DETECTION -----------------
 def detect_language(text):
@@ -70,6 +76,8 @@ def detect_language(text):
         "kapus", "tomato","pana","dag",
         "paus","kanda","bhat","us","gahu",
         "pane","pivli","lagvad","yojana","shetkari"
+        ,"karle","jeevamrut","fawarni","pivlya","kharif",
+        'namaste'
     ]
 
     # Marathi Lipi
@@ -88,6 +96,7 @@ def detect_language(text):
 
     return "english"
     
+    
 # ---------------- WEATHER ----------------
 def get_weather(city, language):
 
@@ -96,6 +105,8 @@ def get_weather(city, language):
     try:
 
         response = requests.get(url, timeout=5)
+
+        logging.info(f"Weather API called for city: {city}")
 
         data = response.json()
 
@@ -121,9 +132,59 @@ def get_weather(city, language):
 
         }
 
-    except:
+    except Exception as e:
+          logging.error(f"Weather API Error: {e}")
 
-        return None
+          return None
+    
+
+def get_weather_by_coords(lat, lon, language):
+
+    url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid={api_key}&units=metric"
+
+    try:
+        response = requests.get(url, timeout=10)
+        data = response.json()
+
+        if data.get("cod") != 200:
+            return None
+
+        temp = data["main"]["temp"]
+        humidity = data["main"]["humidity"]
+        weather = data["weather"][0]["description"]
+        city = data["name"]
+
+        # Reverse geocoding — exact location name
+        # Nominatim — exact village/town name
+        try:
+          geo_url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&zoom=14"
+          geo_res = requests.get(geo_url, timeout=5, headers={"User-Agent": "ShetkariMitraAI/1.0"})
+          geo_data = geo_res.json()
+          address = geo_data.get("address", {})
+    
+          print("Address data:", address)  # debug ke liye
+    
+          city = (
+             address.get("village") or
+             address.get("hamlet") or      # ← chhote gaon ke liye
+             address.get("town") or
+             address.get("municipality") or # ← taluka level
+             address.get("county") or       # ← district level
+             address.get("suburb") or
+             address.get("city") or
+             city
+           )
+        except:
+           pass
+        return {
+            "temp": temp,
+            "humidity": humidity,
+            "weather": weather,
+            "city": city
+        }
+
+    except:
+        return None    
     
 
 def get_forecast(city):
@@ -149,99 +210,127 @@ def get_forecast(city):
 
 def get_market_price(crop, language):
 
+    logging.info("Entered get_market_price()")
+
+    url = f"https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key={marketing_key}&format=json&limit=5&filters%5Bstate.keyword%5D=Maharashtra&filters%5Bcommodity%5D={crop}"
+
     headers = {
-        "api-key": marketing_key
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0 Safari/537.36"
+   }
+
+    # Marathi → English crop mapping
+    crop_map = {
+        "kanda": "Onion",
+        "kapus": "Cotton",
+        "batata": "Potato",
+        "tomato": "Tomato",
+        "wheat": "Wheat",
+        "rice": "Rice",
+        "sugarcane": "Sugarcane"
     }
 
-    url = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070"
+    crop_name = crop_map.get(crop.lower(), crop.title())
 
-    params = {
-        "api-key": marketing_key,
-        "format": "json",
-        "limit": 5,
-        "filters[state.keyword]": "Maharashtra",
-        "filters[commodity]": crop.title()
-    }
 
     try:
-        session = requests.Session()
-        session.headers.update(headers)
-        response = session.get(url, params=params, timeout=60)
-        print(response.status_code)
+        logging.info(f"Crop Requested: {crop_name}")
+
+        response = requests.get(
+            url,
+            headers=headers,
+            timeout=15
+        )
+
+        logging.info(f"Market API Status: {response.status_code}")
+
         data = response.json()
-        
+
+        if response.status_code != 200:
+            return "❌ Market API Error"
+
         if not data.get("records"):
             if language == "marathi":
-                return "❌ या पिकाचा भाव सापडला नाही."
-            return "❌ Price not found for this crop."
+                return f"❌ {crop_name} चा भाव सापडला नाही."
+            return f"❌ Price not found for {crop_name}."
 
         results = []
+
         for item in data["records"]:
+
             commodity = item.get("commodity", "")
             market = item.get("market", "")
+            date = item.get("arrival_date", "")
+
             min_price = item.get("min_price", "")
             max_price = item.get("max_price", "")
             modal_price = item.get("modal_price", "")
-            date = item.get("arrival_date", "")
 
             if language == "marathi":
+
                 results.append(
                     f"🌾 पीक : {commodity}\n"
                     f"📍 बाजार : {market}\n"
                     f"📅 तारीख : {date}\n"
-                    f"💰 किमान : ₹{min_price} | कमाल : ₹{max_price} | सरासरी : ₹{modal_price}"
+                    f"🗺 जिल्हा : {item.get('district', '')}\n"
+                    f"💰 किमान : ₹{min_price}|💰 कमाल : ₹{modal_price}|💰 सरासरी : ₹{modal_price}"
+                    
                 )
+
             else:
+
                 results.append(
                     f"🌾 Crop : {commodity}\n"
                     f"📍 Market : {market}\n"
                     f"📅 Date : {date}\n"
-                    f"💰 Min : ₹{min_price} | Max : ₹{max_price} | Modal : ₹{modal_price}"
+                    f"🗺 District : {item.get('district', '')}\n"
+                    f"💰 Min : ₹{min_price}|💰 Max : ₹{max_price}|💰 Modal : ₹{modal_price}"
+                    
                 )
 
         return "\n\n".join(results)
 
     except Exception as e:
-        print(e)
+
+        logging.error(f"Market API Error: {e}")
+
         if language == "marathi":
             return "❌ बाजारभाव माहिती उपलब्ध नाही."
+
         return "❌ Market price not available."
-
-
 # ---------------- VOICE INPUT ----------------
-def get_voice_input():
+# def get_voice_input():
 
-    fs = 44100
+#     fs = 44100
 
-    seconds = 5
+#     seconds = 5
 
-    recording = sd.rec(
-        int(seconds * fs),
-        samplerate=fs,
-        channels=1
-    )
+#     recording = sd.rec(
+#         int(seconds * fs),
+#         samplerate=fs,
+#         channels=1
+#     )
 
-    sd.wait()
+#     sd.wait()
 
-    recording = np.int16(recording * 32767)
+#     recording = np.int16(recording * 32767)
 
-    write("output.wav", fs, recording)
+#     write("output.wav", fs, recording)
 
-    r = sr.Recognizer()
+#     r = sr.Recognizer()
 
-    with sr.AudioFile("output.wav") as source:
+#     with sr.AudioFile("output.wav") as source:
 
-        audio = r.record(source)
+#         audio = r.record(source)
 
-    try:
+#     try:
 
-        text = r.recognize_google(audio)
+#         text = r.recognize_google(audio)
 
-        return text.lower()
+#         return text.lower()
 
-    except:
+#     except:
 
-        return ""
+#         return ""
     
 
 # ---------------- DETECT CROP ----------------
@@ -254,7 +343,11 @@ def detect_crop(question):
         "wheat",
         "rice",
         "sugarcane",
-        "kanda"
+        "kanda",
+        "kapus",
+        "batata",
+        "gahu",
+        "potato"
     ]
 
     for crop in crops:
@@ -552,6 +645,11 @@ def get_database_response(question, language):
 
     conn.close()
 
+    question = question.lower()
+
+    best_match = None
+    best_length = 0
+
     for row in data:
 
         keywords = row[0].split(",")
@@ -566,13 +664,21 @@ def get_database_response(question, language):
 
             if k in question:
 
-                if language == "marathi":
+                if len(k) > best_length:
+                    best_length = len(k)
 
-                    return answer_mr.replace(";", "\n")
+                    best_match = (answer_en, answer_mr)
 
-                else:
+    if best_match:
+                                
 
-                    return answer_en.replace(";", "\n")
+        if language == "marathi":
+
+            return best_match[1].replace(";", "\n")
+
+        else:
+
+            return best_match[0].replace(";", "\n")
 
     return None 
 
@@ -582,177 +688,181 @@ def detect_disease(filepath, language):
     img = cv2.imread(filepath)
 
     if img is None:
-
         if language == "marathi":
-
             return "❌ फोटो वाचता आला नाही."
-
         else:
-
             return "❌ Unable to read image."
 
-    # Resize image
+    # Resize
     img = cv2.resize(img, (300, 300))
+    total_pixels = 300 * 300
 
-    # Convert to HSV
+    # HSV convert
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-    # ---------------- YELLOW DETECTION ----------------
-    lower_yellow = (20, 100, 100)
+    # ── GREEN (Healthy) ──
+    green_mask = cv2.inRange(hsv, (36, 50, 50), (86, 255, 255))
+    green_pixels = cv2.countNonZero(green_mask)
 
-    upper_yellow = (35, 255, 255)
-
-    yellow_mask = cv2.inRange(
-        hsv,
-        lower_yellow,
-        upper_yellow
-    )
-
+    # ── YELLOW ──
+    yellow_mask = cv2.inRange(hsv, (20, 100, 100), (35, 255, 255))
     yellow_pixels = cv2.countNonZero(yellow_mask)
 
-    print("Yellow Pixels:", yellow_pixels)
+    # ── BLACK SPOTS ──
+    black_mask = cv2.inRange(hsv, (0, 0, 0), (180, 255, 50))
+    black_pixels = cv2.countNonZero(black_mask)
 
-    # ---------------- BLACK DETECTION ----------------
+    # ── BROWN (Rust/Blight) ──
+    brown_mask = cv2.inRange(hsv, (10, 100, 20), (20, 255, 200))
+    brown_pixels = cv2.countNonZero(brown_mask)
 
-    lower_black = (0, 0, 0)
+    # ── WHITE SPOTS (Powdery Mildew) ──
+    white_mask = cv2.inRange(hsv, (0, 0, 200), (180, 30, 255))
+    white_pixels = cv2.countNonZero(white_mask)
 
-    upper_black = (180, 255, 50)
-
-    black_mask = cv2.inRange(
-
-        hsv,
-
-        lower_black,
-
-        upper_black
+    logging.info(
+    f"Disease Detection -> Green:{green_pixels}, Yellow:{yellow_pixels}, "
+    f"Black:{black_pixels}, Brown:{brown_pixels}, White:{white_pixels}"
     )
 
-    black_pixels = cv2.countNonZero(
-
-        black_mask
-    )
-
-    print(
-        "Black Pixels:",
-        black_pixels
-    )
-
-    # ---------------- DISEASE RESULTS ----------------
+    # ── SEVERITY CALCULATOR ──
+    def severity(pixels):
+        pct = (pixels / total_pixels) * 100
+        if pct > 20:
+            return ("High", "जास्त", "🔴")
+        elif pct > 10:
+            return ("Medium", "मध्यम", "🟡")
+        else:
+            return ("Low", "कमी", "🟢")
 
     results = []
 
+    # ── HEALTHY CHECK ──
+    green_pct = (green_pixels / total_pixels) * 100
+    disease_pixels = yellow_pixels + black_pixels + brown_pixels + white_pixels
+    disease_pct = (disease_pixels / total_pixels) * 100
 
-    # ---------------- YELLOW DISEASE ----------------
-
-    if yellow_pixels > 3000:
-
-        if yellow_pixels > 5000:
-
-            confidence_en = "High"
-            confidence_mr = "जास्त"
-
-        else:
-
-            confidence_en = "Medium"
-            confidence_mr = "मध्यम"
-
-
+    if green_pct > 40 and disease_pct < 5:
         if language == "marathi":
-
-            results.append(
-
-                "🌿 पान पिवळे पडण्याची समस्या आढळली.\n"
-
-                f"📊 खात्री : {confidence_mr}\n"
-
-                "✅ उपाय : संतुलित खत वापरा."
+            return (
+                "✅ पान निरोगी दिसत आहे!\n"
+                f"🌿 हिरवेपणा : {green_pct:.1f}%\n"
+                "💚 कोणताही रोग आढळला नाही.\n"
+                "🌱 पिकाची चांगली काळजी घेत आहात!"
+            )
+        else:
+            return (
+                "✅ Leaf appears Healthy!\n"
+                f"🌿 Greenness : {green_pct:.1f}%\n"
+                "💚 No disease detected.\n"
+                "🌱 Keep up the good crop care!"
             )
 
-        else:
-
-            results.append(
-
-                "🌿 Yellow Leaf Problem Detected.\n"
-
-                f"📊 Confidence : {confidence_en}\n"
-
-                "✅ Suggestion : Use balanced fertilizer."
-            )
-
-
-    # ---------------- BLACK SPOTS ----------------
-
-    if black_pixels > 3000:
-
-        if black_pixels > 5000:
-
-            confidence_en = "High"
-            confidence_mr = "जास्त"
-
-        else:
-
-            confidence_en = "Medium"
-            confidence_mr = "मध्यम"
-
-
+    # ── YELLOW DISEASE ──
+    if yellow_pixels > 2000:
+        sev_en, sev_mr, icon = severity(yellow_pixels)
         if language == "marathi":
-
             results.append(
-
-                "⚫ पानावर काळे डाग आढळले.\n"
-
-                f"📊 खात्री : {confidence_mr}\n"
-
-                "✅ उपाय : बुरशीनाशक फवारणी करा."
+                f"🌿 पान पिवळे पडण्याची समस्या आढळली.\n"
+                f"📊 तीव्रता : {icon} {sev_mr} ({(yellow_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 कारण : नायट्रोजनची कमतरता किंवा बुरशी\n"
+                "✅ उपाय : DAP खत द्या, पाण्याचे नियोजन करा."
             )
-
         else:
-
             results.append(
-
-                "⚫ Black Spot Disease Detected.\n"
-
-                f"📊 Confidence : {confidence_en}\n"
-
-                "✅ Suggestion : Apply fungicide spray."
+                f"🌿 Yellow Leaf Disease Detected.\n"
+                f"📊 Severity : {icon} {sev_en} ({(yellow_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 Cause : Nitrogen deficiency or fungal infection\n"
+                "✅ Remedy : Apply DAP fertilizer, manage irrigation."
             )
 
+    # ── BLACK SPOTS ──
+    if black_pixels > 2000:
+        sev_en, sev_mr, icon = severity(black_pixels)
+        if language == "marathi":
+            results.append(
+                f"⚫ पानावर काळे डाग आढळले.\n"
+                f"📊 तीव्रता : {icon} {sev_mr} ({(black_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 कारण : बुरशीजन्य रोग (Fungal)\n"
+                "✅ उपाय : मॅन्कोझेब बुरशीनाशक फवारणी करा."
+            )
+        else:
+            results.append(
+                f"⚫ Black Spot Disease Detected.\n"
+                f"📊 Severity : {icon} {sev_en} ({(black_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 Cause : Fungal infection\n"
+                "✅ Remedy : Spray Mancozeb fungicide immediately."
+            )
 
-    # ---------------- FINAL RESULT ----------------
+    # ── BROWN / RUST / BLIGHT ──
+    if brown_pixels > 2000:
+        sev_en, sev_mr, icon = severity(brown_pixels)
+        if language == "marathi":
+            results.append(
+                f"🟤 तांबेरा / करपा रोग आढळला.\n"
+                f"📊 तीव्रता : {icon} {sev_mr} ({(brown_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 कारण : Rust किंवा Blight बुरशी\n"
+                "✅ उपाय : Propiconazole फवारणी करा, ओलावा कमी करा."
+            )
+        else:
+            results.append(
+                f"🟤 Rust / Blight Disease Detected.\n"
+                f"📊 Severity : {icon} {sev_en} ({(brown_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 Cause : Rust or Blight fungus\n"
+                "✅ Remedy : Spray Propiconazole, reduce moisture."
+            )
 
+    # ── WHITE / POWDERY MILDEW ──
+    if white_pixels > 3000:
+        sev_en, sev_mr, icon = severity(white_pixels)
+        if language == "marathi":
+            results.append(
+                f"⬜ भुरी रोग (Powdery Mildew) आढळला.\n"
+                f"📊 तीव्रता : {icon} {sev_mr} ({(white_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 कारण : कोरड्या हवामानात बुरशी\n"
+                "✅ उपाय : Sulphur dust किंवा Karathane फवारणी करा."
+            )
+        else:
+            results.append(
+                f"⬜ Powdery Mildew Detected.\n"
+                f"📊 Severity : {icon} {sev_en} ({(white_pixels/total_pixels*100):.1f}%)\n"
+                "🔍 Cause : Fungus in dry weather\n"
+                "✅ Remedy : Apply Sulphur dust or Karathane spray."
+            )
+
+    # ── FINAL RESULT ──
     if results:
-
-        return "\n\n".join(results)
-
+        header = "🔬 रोग विश्लेषण अहवाल\n\n" if language == "marathi" else "🔬 Disease Analysis Report\n\n"
+        return header + "\n\n".join(results)
     else:
-
         if language == "marathi":
-
             return (
-
-                "रोग ओळखता आला नाही.\n"
-                "कृपया स्पष्ट पानाचा फोटो अपलोड करा."
+                "⚠️ रोग स्पष्टपणे ओळखता आला नाही.\n"
+                "📷 कृपया पानाचा स्पष्ट, जवळचा फोटो अपलोड करा.\n"
+                "💡 फोटो नैसर्गिक प्रकाशात काढा."
             )
-
         else:
-
             return (
-
-                "Disease not detected.\n"
-                "Please upload a clear leaf image."
+                "⚠️ Disease not clearly detected.\n"
+                "📷 Please upload a clear, close-up leaf photo.\n"
+                "💡 Take photo in natural light for better results."
             )
 # ---------------- MAIN CHATBOT ----------------
 def chatbot_response(question):
 
     question = str(question)
 
+    logging.info(f"User Question: {question}")
+
     language = detect_language(question)
+
+    logging.info(f"Language: {language}")
 
     question = question.strip().lower()
 
     detected_crop = detect_crop(question)
 
-    print("Detected Crop:", detected_crop)
+    logging.info(f"Detected Crop: {detected_crop}")
 
     # Greeting
     if (
@@ -1080,8 +1190,11 @@ def chatbot_response(question):
           max_tokens=200,
           timeout=10
         )
+
+        logging.info("Groq Response Generated")
         raw = response.choices[0].message.content
         print("Groq Raw Answer:", raw)
+        logging.info("Groq response received successfully")
 
         clean = re.sub(r'\*\*(.+?)\*\*', r'\1', raw)
         clean = re.sub(r'\*(.+?)\*', r'\1', clean)
@@ -1096,10 +1209,10 @@ def chatbot_response(question):
       except Exception as e:
        
        if '429' in str(e):
-            print(f"Rate limit — waiting 5 sec... attempt {attempt+1}")
+            logging.warning(f"Rate limit — waiting 5 sec... attempt {attempt+1}")
             time.sleep(10)
        else:      
-        print("Groq Error:",e)
+        logging.error(f"Groq Error: {e}")
         break
     if language == "marathi":
         return "कृपया अधिक माहिती द्या."
