@@ -7,7 +7,7 @@ Run:      python app.py
 Then open: smart_farmer_ui.html in Chrome
 """
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import tempfile
@@ -25,9 +25,9 @@ from backend import (
 app = Flask(__name__)
 CORS(app)  # Allows HTML file to call this server
 
-@app.route("/")
-def home():
-    return "Smart Farmer Assistant is running successfully!"
+@app.route('/')
+def index():
+    return send_from_directory('.', 'smart_farmer_ui.html')
 
 
 # ─── CHAT ENDPOINT ───────────────────────────────────
