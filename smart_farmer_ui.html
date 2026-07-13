@@ -326,29 +326,29 @@ body{
 }
 
 @media (max-width:768px){
-  .app{
-    grid-template-columns:1fr;
-    grid-template-rows:70px 1fr auto;
-    height:100dvh;
-  }
+  .app{grid-template-columns:1fr;grid-template-rows:64px 1fr auto auto;height:100dvh;}
   .sidebar{display:none;}
-  .input-bar{
-    grid-column:1;
-    padding:10px 14px;
-    gap:8px;
-  }
-  .msg{max-width:95%;}
-  .messages{padding:16px 14px;gap:14px;}
-  .header{padding:0 16px;height:70px;}
-  .header-text h1{font-size:18px;}
-  .header-text p{font-size:10px;}
-  .msg-bubble{font-size:14px;padding:11px 14px;}
-  .input-field{font-size:15px;padding:12px 16px;}
-  .btn-voice{width:46px !important;height:46px !important;font-size:20px !important;}
-  .btn-send{width:46px !important;height:46px !important;}
+  .sidebar.mobile-active{display:flex;position:fixed;top:64px;left:0;right:0;bottom:70px;z-index:20;background:rgba(255,255,255,0.92);backdrop-filter:blur(20px);overflow-y:auto;padding:16px;gap:14px;animation:slideUp 0.3s ease;}
+  @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  .header{height:64px;padding:0 16px;grid-column:1;}
+  .header-text h1{font-size:17px;}
+  .header-text p{font-size:9.5px;}
+  .chat-area{grid-column:1;overflow:hidden;}
+  .messages{padding:14px;gap:13px;}
+  .msg{max-width:92%;}
+  .msg-bubble{font-size:14.5px;padding:11px 14px;}
+  .input-bar{grid-column:1;padding:10px 12px;gap:8px;}
+  .input-field{font-size:15px;padding:11px 16px;}
   .btn-action{width:40px;height:40px;font-size:17px;}
+  .btn-voice{width:46px!important;height:46px!important;font-size:20px!important;}
+  .btn-send{width:44px!important;height:44px!important;}
+  .bottom-nav{display:flex;grid-column:1;background:var(--glass-strong);backdrop-filter:blur(20px);border-top:1px solid var(--glass-border);height:70px;}
+  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:transparent;cursor:pointer;font-size:10.5px;font-weight:700;color:var(--ink-muted);font-family:'Sora',sans-serif;transition:all 0.2s;padding:8px 4px;}
+  .nav-btn .nav-icon{font-size:22px;transition:transform 0.2s;}
+  .nav-btn.active{color:var(--mint-deep);}
+  .nav-btn.active .nav-icon{transform:scale(1.15);}
 }
-}
+.bottom-nav{display:none;}
 </style>
 </head>
 <body>
@@ -391,11 +391,11 @@ body{
 
     <div class="s-card">
       <div class="s-card-title"><span class="dot"></span>त्वरित विचारा</div>
-      <button class="quick-btn" onclick="askCurrentWeather()">
+      <button class="quick-btn" onclick="askCurrentWeather();closeSidebar()">
         <span class="qicon">🌦</span>
         <div><div class="q-mr">आजचे हवामान</div><div class="q-en">Today's Weather</div></div>
       </button>
-      <button class="quick-btn"  onclick="askRainQuestion('udya')">
+      <button class="quick-btn"  onclick="askRainQuestion('udya');closeSidebar()">
         <span class="qicon">🌧</span>
         <div><div class="q-mr">उद्या पाऊस येणार का?</div><div class="q-en">Rain Tomorrow?</div></div>
       </button>
@@ -403,11 +403,11 @@ body{
         <span class="qicon">🌿</span>
         <div><div class="q-mr">जीवामृत कसे बनवावे</div><div class="q-en">Organic Fertilizer</div></div>
       </button>
-      <button class="quick-btn" onclick="quickAsk('kanda bhav')">
+      <button class="quick-btn" onclick="quickAsk('kanda bhav');closeSidebar()">
         <span class="qicon">💰</span>
         <div><div class="q-mr">कांदा बाजारभाव</div><div class="q-en">Onion Market Price</div></div>
       </button>
-      <button class="quick-btn" onclick="quickAsk('tomato market price')">
+      <button class="quick-btn" onclick="quickAsk('tomato market price');closeSidebar()">
         <span class="qicon">🛒</span>
         <div><div class="q-mr">टोमॅटो बाजारभाव</div><div class="q-en">Tomato Market Price</div></div>
       </button>
@@ -468,6 +468,21 @@ body{
     <button class="btn-action btn-send" title="पाठवा" onclick="handleSend()">➤</button>
     <button class="btn-action" title="थांबवा" onclick="window.speechSynthesis.cancel()" style="font-size:16px;">⏹</button>
   </div>
+
+  <nav class="bottom-nav" id="bottomNav">
+  <button class="nav-btn active" id="nav-chat" onclick="switchTab('chat')">
+    <span class="nav-icon">💬</span><span>चॅट</span>
+  </button>
+  <button class="nav-btn" id="nav-weather" onclick="switchTab('weather')">
+    <span class="nav-icon">🌦</span><span>हवामान</span>
+  </button>
+  <button class="nav-btn" id="nav-quick" onclick="switchTab('quick')">
+    <span class="nav-icon">⚡</span><span>त्वरित</span>
+  </button>
+  <button class="nav-btn" id="nav-more" onclick="switchTab('more')">
+    <span class="nav-icon">🌿</span><span>अधिक</span>
+  </button>
+</nav>
 
 </div>
 
@@ -625,6 +640,28 @@ function parseWeatherFromAnswer(text){
   if(hum)document.getElementById('w-hum').textContent=hum[1]+'%';
 }
 refreshWeather();setInterval(refreshWeather,10*60*1000);
+
+let activeTab='chat';
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('nav-'+tab);
+  if(btn)btn.classList.add('active');
+  const sidebar=document.getElementById('sidebar');
+  if(tab==='chat'){
+    sidebar.classList.remove('mobile-active');
+    document.querySelector('.chat-area').style.display='flex';
+    document.querySelector('.input-bar').style.display='flex';
+  }else{
+    sidebar.classList.add('mobile-active');
+    document.querySelector('.chat-area').style.display='none';
+    document.querySelector('.input-bar').style.display='none';
+    if(tab==='weather')sidebar.scrollTo({top:0,behavior:'smooth'});
+    else if(tab==='quick')sidebar.querySelectorAll('.s-card')[0]?.scrollIntoView({behavior:'smooth'});
+    else if(tab==='more')sidebar.querySelectorAll('.s-card')[1]?.scrollIntoView({behavior:'smooth'});
+  }
+}
+function closeSidebar(){if(window.innerWidth<=768)switchTab('chat');}  
 
 function handleImageUpload(event){
   const file=event.target.files[0];if(!file)return;
