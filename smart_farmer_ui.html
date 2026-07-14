@@ -65,7 +65,10 @@ body{
 .header-text h1{font-weight:800;font-size:20px;color:var(--ink);letter-spacing:-0.3px;}
 .header-text h1 span{background:linear-gradient(135deg,var(--mint-deep),var(--sky-deep));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .header-text p{font-size:11px;color:var(--ink-muted);margin-top:2px;font-weight:500;}
-.header-right{margin-left:auto;}
+.header-right{
+  margin-left:auto;
+  flex-shrink: 0;
+}
 .status-pill{
   display:flex;align-items:center;gap:7px;
   background:var(--glass-white);backdrop-filter:blur(10px);
@@ -238,7 +241,18 @@ body{
   .header { padding: 0 16px; }
   .header-text h1 { font-size: 18px; }
   .header-text p { display: none; }
-  .status-pill { padding: 5px 10px; font-size: 11px; }
+  
+  /* मोबाईलवर 'ऑनलाइन' वर्ड व्यवस्थित करण्यासाठी */
+  .status-pill { 
+    padding: 4px 8px !important; 
+    font-size: 10px !important; 
+    gap: 4px !important;
+    white-space: nowrap; 
+  }
+  .status-dot {
+    width: 6px !important;
+    height: 6px !important;
+  }
 
   /* Buttons sized perfectly for mobile screen width */
   .input-field { padding: 12px 14px; font-size: 14px; }
@@ -269,7 +283,6 @@ body{
     </div>
   </header>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="weather-card">
       <div class="weather-top">
@@ -337,7 +350,6 @@ body{
     </div>
   </aside>
 
-  <!-- CHAT WINDOW -->
   <main class="chat-area">
     <div class="messages" id="messages">
       <div class="date-divider">🌱 आजचे संभाषण • Today's Chat 🌱</div>
@@ -362,7 +374,6 @@ body{
     </div>
   </main>
 
-  <!-- CONTROL INPUT BAR -->
   <div class="input-bar">
     <button class="btn-action btn-voice" id="voice-btn" title="बोला" onclick="toggleVoice()">🎤</button>
     <input class="input-field" id="inp" type="text" placeholder="प्रश्न विचारा..." autocomplete="off" onkeydown="handleKey(event)"/>
@@ -373,6 +384,7 @@ body{
 </div>
 
 <script>
+
 const BACKEND_URL = window.location.hostname === 'localhost' || 
                     window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
