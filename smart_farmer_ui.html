@@ -490,81 +490,56 @@ function askRainQuestion(type){
 }
 
 
-// १. नवीन आणि खात्रीशीर लोकेशन पद्धत
-async function refreshWeather() {
+async function refreshWeather(){
+  document.getElementById('w-city-name').textContent='📍 लोड होत आहे...';
+  
+  // Browser se location maango
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        // जीपीएस यशस्वी झाले तर
-        await fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        await fetchWeatherByCoords(lat, lon);
       },
-      async (error) => {
-        // जीपीएस फेल झाले किंवा परमिशन नाकारली, तर आयपी (IP) वरून शहर शोधणार
-        console.log("GPS फेल झाले, IP वरून शोधत आहे...");
-        await fetchWeatherByIP();
-      },
-      { 
-        enableHighAccuracy: false, // हाय ॲक्युरसी फॉल्स केल्याने मोबाईलवर लगेच लोकेशन मिळते
-        timeout: 6000,             // ६ सेकंदाचा टाईमआऊट
-        maximumAge: 600000         // १० मिनिटे जुने लोकेशन चालून जाईल
+      (error) => {
+        console.log('Location error:', error);
+        // Permission nahi mili toh default city use karo
+        fetchWeatherByCity('Poladpur');
       }
     );
   } else {
-    await fetchWeatherByIP();
+    fetchWeatherByCity('Poladpur');
   }
 }
 
-// २. कोऑर्डिनेट्सवरून हवामान मिळवणे
 async function fetchWeatherByCoords(lat, lon) {
   try {
     const res = await fetch(`${BACKEND_URL}/weather-coords?lat=${lat}&lon=${lon}`);
     const data = await res.json();
     if (data.temp !== undefined) {
-      updateWeatherUI(data);
-    } else {
-      await fetchWeatherByIP();
-    }
-  } catch (err) {
-    await fetchWeatherByIP();
-  }
-}
-
-// ३. आयपी (IP Address) वरून अचूक शहर शोधणारे नवीन फंक्शन (हे कधीच फेल होत नाही!)
-async function fetchWeatherByIP() {
-  try {
-    // जगातील सर्वात वेगवान फ्री आयपी लोकेशन सर्व्हिस
-    const ipRes = await fetch('https://ipapi.co/json/');
-    const ipData = await ipRes.json();
-    if (ipData && ipData.city) {
-      console.log("IP वरून मिळालेले शहर:", ipData.city);
-      await fetchWeatherByCity(ipData.city);
-    } else {
-      await fetchWeatherByCity('Poladpur'); // अगदीच काही नाही चालले तर शेवटचा पर्याय
-    }
-  } catch (e) {
-    await fetchWeatherByCity('Poladpur');
-  }
-}
-
-// ४. शहराच्या नावावरून हवामान मिळवणे
-async function fetchWeatherByCity(city) {
-  try {
-    const res = await fetch(`${BACKEND_URL}/weather?city=${city}`);
-    const data = await res.json();
-    if (data.temp !== undefined) {
-      updateWeatherUI(data);
+      document.getElementById('w-temp').textContent = data.temp;
+      document.getElementById('w-hum').textContent = data.humidity + '%';
+      document.getElementById('w-cond').textContent = data.weather;
+      document.getElementById('w-city-name').textContent = '📍 ' + data.city;
     }
   } catch {
     document.getElementById('w-city-name').textContent = '⚠️ ऑफलाइन';
   }
 }
 
-// ५. स्क्रीनवर डेटा दाखवण्यासाठी कॉमन फंक्शन
-function updateWeatherUI(data) {
-  document.getElementById('w-temp').textContent = data.temp;
-  document.getElementById('w-hum').textContent = data.humidity + '%';
-  document.getElementById('w-cond').textContent = data.weather;
-  document.getElementById('w-city-name').textContent = '📍 ' + data.city;
+async function fetchWeatherByCity(city) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/weather?city=${city}`);
+    const data = await res.json();
+    if (data.temp !== undefined) {
+      document.getElementById('w-temp').textContent = data.temp;
+      document.getElementById('w-hum').textContent = data.humidity + '%';
+      document.getElementById('w-cond').textContent = data.weather;
+      document.getElementById('w-city-name').textContent = '📍 ' + data.city;
+    }
+  } catch {
+    document.getElementById('w-city-name').textContent = '⚠️ ऑफलाइन';
+  }
 }
 function parseWeatherFromAnswer(text){
   const temp=text.match(/(\d+\.?\d*)°C/);const hum=text.match(/(\d+)%/);
