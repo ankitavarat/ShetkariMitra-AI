@@ -283,6 +283,7 @@ body{
     </div>
   </header>
 
+  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="weather-card">
       <div class="weather-top">
@@ -350,6 +351,7 @@ body{
     </div>
   </aside>
 
+  <!-- CHAT WINDOW -->
   <main class="chat-area">
     <div class="messages" id="messages">
       <div class="date-divider">🌱 आजचे संभाषण • Today's Chat 🌱</div>
@@ -374,6 +376,7 @@ body{
     </div>
   </main>
 
+  <!-- CONTROL INPUT BAR -->
   <div class="input-bar">
     <button class="btn-action btn-voice" id="voice-btn" title="बोला" onclick="toggleVoice()">🎤</button>
     <input class="input-field" id="inp" type="text" placeholder="प्रश्न विचारा..." autocomplete="off" onkeydown="handleKey(event)"/>
@@ -384,7 +387,6 @@ body{
 </div>
 
 <script>
-
 const BACKEND_URL = window.location.hostname === 'localhost' || 
                     window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
@@ -397,10 +399,8 @@ const messagesEl=document.getElementById('messages');
 function toggleMenu(forceState) {
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
-  
   const isOpen = sidebar.classList.contains('active');
   const nextState = forceState !== undefined ? forceState : !isOpen;
-  
   if (nextState) {
     sidebar.classList.add('active');
     overlay.classList.add('active');
@@ -445,11 +445,10 @@ async function sendToBackend(question){
     return data.answer||'No response from server.';
   }catch(err){
     if(err.name==='AbortError')return '⚠️ Server timeout. Please try again.';
-    return '⚠️ Server not connected.\nStart Flask server: python app.py';
+    return '⚠️ Server not connected.';
   }
 }
 
-// Fixed flag handling to prevent message blocking
 let isSending = false;
 async function handleSend(){
   if(isSending) return;
@@ -479,16 +478,17 @@ function quickAsk(q){document.getElementById('inp').value=q;handleSend();}
 
 function askCurrentWeather(){
   const cityName=document.getElementById('w-city-name').textContent.replace('📍 ','').trim();
-  if(cityName&&cityName!=='लोड होत आहे...'&&cityName!=='⚠️ ऑफलाइन')quickAsk(cityName+' weather');
+  if(cityName&&cityName!=='로드 होत आहे...'&&cityName!=='⚠️ ऑफलाइन')quickAsk(cityName+' weather');
   else quickAsk('weather');
 }
 
 function askRainQuestion(type){
   const cityName=document.getElementById('w-city-name').textContent.replace('📍 ','').trim();
-  const city=(cityName&&cityName!=='लोड होत आहे...'&&cityName!=='⚠️ ऑफलाइन')?cityName:'Poladpur';
+  const city=(cityName&&cityName!=='로드 होत आहे...'&&cityName!=='⚠️ ऑफलाइन')?cityName:'Poladpur';
   if(type==='udya')quickAsk(`udya paus padnar ka ${city} madhe`);
   else quickAsk(`aaj paus padnar aahe ka ${city} madhe`);
 }
+
 
 async function refreshWeather(){
   if(navigator.geolocation){
@@ -555,7 +555,7 @@ function handleImageUpload(event){
       removeTyping();
       addMessage('🔬 रोग विश्लेषण\n\n'+(data.result||'Disease not detected.'),'bot');
       try{speakAnswer(data.result||'');}catch(e){}
-    }catch{removeTyping();addMessage('⚠️ फोटो विश्लेषण अयशस्वी.\npython app.py सुरू करा','bot');}
+    }catch{removeTyping();addMessage('⚠️ फोटो विश्लेषण अयशस्वी.','bot');}
     event.target.value='';
   };
   reader.readAsDataURL(file);
