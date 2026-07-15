@@ -1142,6 +1142,7 @@ def chatbot_response(question):
             "INSERT INTO unknown_questions(question) VALUES(?)",
             (question,)
         )
+        logging.info(f"New Unknown Question: {question}")
 
     conn.commit()
 
