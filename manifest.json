@@ -3,8 +3,8 @@
   "name": "Shetkari Mitra AI Chatbot",
   "icons": [
     {
-      "src": "logo .jpg",
-      "type": "image/jpeg",
+      "src": "logo.jpg",
+      "type": "image/jpg",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
