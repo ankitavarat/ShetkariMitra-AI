@@ -97,6 +97,26 @@ def detect():
     return jsonify({"result": result})
 
 
+# manifest.json साठी रूट
+@app.route('/manifest.json')
+def serve_manifest():
+    return send_from_directory('.', 'manifest.json')
+
+# service-worker.js साठी रूट
+@app.route('/service-worker.js')
+def serve_sw():
+    return send_from_directory('.', 'service-worker.js')
+
+# लोगो आयकॉन्ससाठी रूट
+@app.route('/icon-192.png')
+def serve_icon192():
+    return send_from_directory('.', 'icon-192.png')
+
+@app.route('/icon-512.png')
+def serve_icon512():
+    return send_from_directory('.', 'icon-512.png')
+
+
 # ─── RUN ─────────────────────────────────────────────
 if __name__ == "__main__":
     print("=" * 50)
