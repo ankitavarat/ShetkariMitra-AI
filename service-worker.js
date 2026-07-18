@@ -1,7 +1,7 @@
 const CACHE_NAME = 'shetkarimitra-cache-v1';
 const ASSETS = [
   './',
-  './smart_farmer_ui.html',
+  '/',
   './manifest.json',
   './icon-192.png',
   './icon-512.png'
