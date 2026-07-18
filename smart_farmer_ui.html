@@ -4,6 +4,12 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>🌾 ShetkariMitra AI</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10B981">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ShetkariMitra AI">
+<link rel="apple-touch-icon" href="icon-192.png">
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -598,6 +604,15 @@ function speakAnswer(text){
   utterance.lang=isMarathi?'mr-IN':'en-IN';utterance.rate=0.95;
   window.speechSynthesis.cancel();
   setTimeout(()=>window.speechSynthesis.speak(utterance),100);
+}
+
+// PWA Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(reg => console.log('ShetkariMitra PWA Ready!'))
+      .catch(err => console.log('PWA Error:', err));
+  });
 }
 </script>
 </body>
