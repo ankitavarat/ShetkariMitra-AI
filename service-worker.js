@@ -1,4 +1,4 @@
-const CACHE_NAME = 'shetkarimitra-v1';
+const CACHE_NAME = 'shetkarimitra-cache-v1';
 const ASSETS = [
   './',
   './smart_farmer_ui.html',
