@@ -2,7 +2,7 @@
   "name": "ShetkariMitra AI",
   "short_name": "ShetkariMitra",
   "description": "शेतकऱ्यांसाठी AI आधारित आधुनिक शेती सहायक",
-  "start_url": "./smart_farmer_ui.html",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#E8F5F0",
   "theme_color": "#10B981",
