@@ -242,34 +242,36 @@ body{
   /* MOBILE INPUT BAR OPTIMIZATION */
   .input-bar { 
     grid-column: 1; 
-    padding: 10px 12px; 
-    gap: 8px; 
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(255, 255, 255, 0.8);
+    padding: 10px 8px; 
+    gap: 6px; 
+  }
+  .messages { padding: 16px; gap: 14px; }
+  .msg { max-width: 88%; }
+  .msg-bubble { font-size: 14.5px; padding: 12px 15px; }
+  
+  .header { padding: 0 16px; }
+  .header-text h1 { font-size: 18px; }
+  .header-text p { display: none; }
+  
+  /* मोबाईलवर 'ऑनलाइन' वर्ड व्यवस्थित करण्यासाठी */
+  .status-pill { 
+    padding: 4px 8px !important; 
+    font-size: 10px !important; 
+    gap: 4px !important;
+    white-space: nowrap; 
+  }
+  .status-dot {
+    width: 6px !important;
+    height: 6px !important;
   }
 
-  /* टायपिंग बॉक्स मोठा आणि प्रीमियम बनवण्यासाठी */
-  .input-field { 
-    padding: 14px 18px !important; 
-    font-size: 15px !important; 
-    border-radius: 24px !important;
-    background: #ffffff !important;
-    border: 2px solid #34D399 !important; /* हलका हिरवा बॉर्डर */
-    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12) !important;
-    color: var(--ink);
-  }
-
-  .input-field:focus {
-    border-color: #10B981 !important;
-    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.25) !important;
-  }
-
-  /* बटन्सची साईझ मोबाईलसाठी परफेक्ट करणे */
-  .btn-action { width: 44px !important; height: 44px !important; font-size: 18px !important; flex-shrink: 0; }
-  .btn-voice { width: 46px !important; height: 46px !important; font-size: 20px !important; }
-  .btn-send { width: 44px !important; height: 44px !important; font-size: 18px !important; }
-  .btn-stop { width: 44px !important; height: 44px !important; font-size: 16px !important; }
+  /* Buttons sized perfectly for mobile screen width */
+  .input-field { padding: 12px 14px; font-size: 14px; }
+  .btn-action { width: 40px; height: 40px; font-size: 15px; }
+  .btn-voice { width: 42px!important; height: 42px!important; font-size: 18px!important; }
+  .btn-send { width: 40px!important; height: 40px!important; font-size: 16px!important; }
+  .btn-stop { width: 40px!important; height: 40px!important; font-size: 14px!important; }
+}
 
 .bottom-nav { display: none !important; }
 </style>
