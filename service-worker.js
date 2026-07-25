@@ -1,34 +1,30 @@
-const CACHE_NAME = 'shetkarimitra-v5'; // Version 5
+const CACHE_NAME = 'shetkarimitra-v20';
 
-// ऑफलाईन सेव्ह करायच्या सर्व फाईल्स आणि लिंक्स
-const ASSETS = [
+// कॅशे करायच्या अचूक फाईल्स
+const ASSETS_TO_CACHE = [
   '/',
-  './smart_farmer_ui.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap'
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
-// 1. Install & Cache All Assets
+// १. इन्स्टॉल करताना होमपेज सेव्ह करा
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[PWA] Caching all essential files');
-      return cache.addAll(ASSETS);
+      return cache.addAll(ASSETS_TO_CACHE);
     })
   );
   self.skipWaiting();
 });
 
-// 2. Activate & Clear Old Cache
+// २. जुना कॅशे साफ करा
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            console.log('[PWA] Removing old cache:', key);
             return caches.delete(key);
           }
         })
@@ -38,37 +34,21 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 3. Fetch (Network First, Fallback to Cache)
+// ३. ऑफलाईन असताना कॅशेमधून होमपेज दाखवा
 self.addEventListener('fetch', (event) => {
-  // Backend API calls bypass cache
-  if (event.request.url.includes('/chat') || 
-      event.request.url.includes('/weather') || 
-      event.request.url.includes('/detect')) {
+  // फक्त पेज नेव्हिगेशन किंवा GET रिक्वेस्ट हाताळा
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('/');
+      })
+    );
     return;
   }
 
   event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        // dynamic cache update
-        if (response && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // इंटरनेट नसेल तर कॅशेमधून होमपेज द्या
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          if (event.request.mode === 'navigate') {
-            return caches.match('/');
-          }
-        });
-      })
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request);
+    })
   );
 });
