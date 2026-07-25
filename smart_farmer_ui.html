@@ -195,7 +195,12 @@ body{
 .btn-action:hover{background:rgba(255,255,255,0.88);transform:translateY(-2px);}
 .btn-voice{background:linear-gradient(135deg,var(--mint),var(--mint-deep))!important;border-color:var(--mint)!important;color:#fff!important;width:52px!important;height:52px!important;font-size:22px!important;box-shadow:0 6px 15px rgba(16,185,129,0.3)!important;}
 .btn-send{background:linear-gradient(135deg,var(--amber),var(--amber-deep))!important;border-color:var(--amber)!important;color:#fff!important;font-size:20px!important;box-shadow:0 6px 15px rgba(245,158,11,0.3)!important;}
-.btn-stop{background: rgba(255, 255, 255, 0.5); font-size:16px;}
+.btn-stop {
+  background: #EF4444 !important;
+  color: white !important;
+  font-size: 16px;
+  display: none !important; 
+}
 .recording{animation:pulse-rec 1s infinite!important;}
 @keyframes pulse-rec{0%,100%{border-color:#EF4444!important;box-shadow:0 8px 20px rgba(239,68,68,0.4);}50%{box-shadow:0 8px 32px rgba(239,68,68,0.7);}}
 
@@ -388,7 +393,7 @@ body{
     <input class="input-field" id="inp" type="text" placeholder="प्रश्न विचारा..." autocomplete="off" onkeydown="handleKey(event)"/>
     <button class="btn-action" title="फोटो" onclick="document.getElementById('file-input').click()">📷</button>
     <button class="btn-action btn-send" title="पाठवा" onclick="handleSend()">➤</button>
-    <button class="btn-action btn-stop" title="थांबवा" onclick="window.speechSynthesis.cancel()">⏹</button>
+    <button class="btn-action btn-stop" id="voice-stop-btn" title="आवाज थांबवा" onclick="stopVoiceOutput()">⏹</button>
   </div>
 </div>
 
@@ -606,14 +611,51 @@ function toggleVoice(){
   recognition.start();
 }
 
+// १. आवाज थांबवणारे आणि बटण लगेच लपवणारे फंक्शन
+function stopVoiceOutput() {
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel(); // आवाज थांबवा
+  }
+  const stopBtn = document.getElementById('voice-stop-btn');
+  if (stopBtn) {
+    stopBtn.style.setProperty('display', 'none', 'important'); // बटण तात्काळ लपवा
+  }
+}
+
+// २. ऑडिओ प्ले करणारे सुधारित फंक्शन
 function speakAnswer(text){
-  if(!window.speechSynthesis)return;
-  const clean=cleanText(text);
-  const utterance=new SpeechSynthesisUtterance(clean);
-  const isMarathi=/[\u0900-\u097F]/.test(clean);
-  utterance.lang=isMarathi?'mr-IN':'en-IN';utterance.rate=0.95;
-  window.speechSynthesis.cancel();
-  setTimeout(()=>window.speechSynthesis.speak(utterance),100);
+  if(!window.speechSynthesis) return;
+  
+  // आधीचा काही आवाज चालू असेल तर बंद करा आणि बटण लपवा
+  stopVoiceOutput();
+  
+  const clean = cleanText(text);
+  if (!clean) return;
+
+  const utterance = new SpeechSynthesisUtterance(clean);
+  const isMarathi = /[\u0900-\u097F]/.test(clean);
+  
+  utterance.lang = isMarathi ? 'mr-IN' : 'en-IN';
+  utterance.rate = 0.95;
+  
+  const stopBtn = document.getElementById('voice-stop-btn');
+
+  // जेव्हा प्रत्यक्षात आवाज बोलायला सुरुवात होईल तेव्हाच बटण दाखवा
+  utterance.onstart = function() {
+    if(stopBtn) stopBtn.style.setProperty('display', 'flex', 'important');
+  };
+
+  // आवाज पूर्ण बोलून संपल्यावर बटण लपवा
+  utterance.onend = function() {
+    if(stopBtn) stopBtn.style.setProperty('display', 'none', 'important');
+  };
+
+  // काही त्रुटी आल्यास बटण लपवा
+  utterance.onerror = function() {
+    if(stopBtn) stopBtn.style.setProperty('display', 'none', 'important');
+  };
+
+  setTimeout(() => window.speechSynthesis.speak(utterance), 100);
 }
 
 // PWA Service Worker Registration
