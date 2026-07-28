@@ -354,7 +354,7 @@ body{
     <div class="s-card">
       <div class="s-card-title"><span class="dot"></span>रोग ओळख</div>
   
-      <div class="upload-area" style="position: relative; padding: 25px 15px; text-align: center;">
+      <div class="upload-area" onclick="toggleUploadMenu(event)" style="position: relative; cursor: pointer;">
         <div class="upload-icon">🔬</div>
         <div class="upload-mr">पानाचा फोटो अपलोड करा</div>
         <div class="upload-en">Upload Leaf Photo for Disease Detection</div>
@@ -689,17 +689,31 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// १. मुख्य बटणावर क्लिक केल्यावर मेनू उघडणे/बंद करणे
+// ==========================================
+// कॅमेरा + गॅलरी पॉप-अप मेनूसाठी JavaScript
+// ==========================================
+
+// १. आयकॉन किंवा कार्डवर क्लिक केल्यावर मेनू दाखवणे / लपवणे
 function toggleUploadMenu(event) {
-  event.stopPropagation(); // क्लिक बाहेर जाऊ न देणे
+  // क्लिक इव्हेंट कार्डच्या बाहेर जाऊ नये म्हणून
+  event.stopPropagation(); 
+  
   const menu = document.getElementById('upload-menu');
-  menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+  if (menu) {
+    // जर मेनू बंद असेल तर उघडेल, उघडा असेल तर बंद होईल
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+  }
 }
 
-// २. कॅमेरा किंवा गॅलरी निवडल्यास त्यानुसार इनपुट ट्रिगर करणे
-function openSource(sourceType) {
-  document.getElementById('upload-menu').style.display = 'none'; // मेनू बंद करणे
+// २. मेनूमधून युझरने 'कॅमेरा' किंवा 'गॅलरी' निवडल्यावर
+function openSource(sourceType, event) {
+  event.stopPropagation();
   
+  // आधी उघडा असलेला मेनू बंद करणे
+  const menu = document.getElementById('upload-menu');
+  if (menu) menu.style.display = 'none'; 
+
+  // निवडलेल्या पर्यायानुसार योग्य Input ट्रिगर करणे
   if (sourceType === 'camera') {
     document.getElementById('camera-input').click();
   } else if (sourceType === 'gallery') {
@@ -707,14 +721,13 @@ function openSource(sourceType) {
   }
 }
 
-// ३. स्क्रीनवर कुठेही बाहेर क्लिक केल्यास मेनू आपोआप बंद होणे
+// ३. स्क्रीनवर बाहेर कुठेही टच/क्लिक केल्यास मेनू आपोआप बंद होणे
 document.addEventListener('click', function(event) {
   const menu = document.getElementById('upload-menu');
   if (menu && menu.style.display === 'block') {
     menu.style.display = 'none';
   }
 });
-  
 </script>
 </body>
 </html>
