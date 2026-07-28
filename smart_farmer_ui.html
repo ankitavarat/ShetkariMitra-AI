@@ -604,7 +604,6 @@ function handleImageUpload(event){
   const file=event.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=async(e)=>{
-    toggleMenu(false);
     const imgWrap=document.createElement('div');imgWrap.className='msg user';
     imgWrap.innerHTML=`
       <div class="msg-avatar" style="background:linear-gradient(135deg,#FBBF24,#F59E0B);width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 12px rgba(15,32,39,0.15)">👨‍🌾</div>
