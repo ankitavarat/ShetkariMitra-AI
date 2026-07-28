@@ -413,14 +413,17 @@ body{
   <div class="input-bar">
     <button class="btn-action btn-voice" id="voice-btn" title="बोला" onclick="toggleVoice()">🎤</button>
     <input class="input-field" id="inp" type="text" placeholder="प्रश्न विचारा..." autocomplete="off" onkeydown="handleKey(event)"/>
-    <button class="btn-action" title="फोटो" onclick="toggleUploadMenu(event)">📷</button>
-    <!-- क्लिक केल्यावर येणारा १ मेनु पॉपअप (कॅमेरा + गॅलरी) -->
-    <div id="upload-menu" class="upload-popup-menu" style="display: none; position: absolute; bottom: 70px; right: 60px; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 8px; width: 180px; z-index: 1000; border: 1px solid rgba(0,0,0,0.1);">
-      <div onclick="openSource('camera')" style="padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 14px; font-weight: 600; color: #333;">
-       📷 कॅमेरा (Camera)
-      </div>
-      <div onclick="openSource('gallery')" style="padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333;">
-       🖼️ गॅलरी (Gallery)
+    <!-- फोटो बटण container -->
+    <div style="position: relative;">
+      <button type="button" class="btn-action" title="फोटो" onclick="toggleInputUploadMenu(event)">📷</button>
+
+      <div id="input-upload-menu" class="upload-popup-menu" style="display: none; position: absolute; bottom: 60px; right: 0; background: #ffffff; border-radius: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); padding: 6px; width: 170px; z-index: 99999; border: 1px solid #E5E7EB;">
+        <div onclick="openSource('camera')" style="padding: 10px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-bottom: 1px solid #F3F4F6; font-size: 13.5px; font-weight: 600; color: #1F2937;">
+         📷 कॅमेरा (Camera)
+        </div>
+        <div onclick="openSource('gallery')" style="padding: 10px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #1F2937;">
+         🖼️ गॅलरी (Gallery)
+        </div>
       </div>
     </div>
     <button class="btn-action btn-send" title="पाठवा" onclick="handleSend()">➤</button>
@@ -604,6 +607,7 @@ function handleImageUpload(event){
   const file=event.target.files[0];if(!file)return;
   const reader=new FileReader();
   reader.onload=async(e)=>{
+    toggleMenu(false);
     const imgWrap=document.createElement('div');imgWrap.className='msg user';
     imgWrap.innerHTML=`
       <div class="msg-avatar" style="background:linear-gradient(135deg,#FBBF24,#F59E0B);width:38px;height:38px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 4px 12px rgba(15,32,39,0.15)">👨‍🌾</div>
@@ -697,35 +701,52 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-function toggleUploadMenu(event) {
+// १. इनपुट बारमधील फोटो बटणावर क्लिक केल्यावर मेनू उघडणे / बंद करणे
+function toggleInputUploadMenu(event) {
   if (event) {
     event.preventDefault();
-    event.stopPropagation(); // यामुळे क्लिक बाहेर/साइडबारला जाणार नाही
+    event.stopPropagation();
   }
   
-  const menu = document.getElementById('upload-menu');
+  const menu = document.getElementById('input-upload-menu');
   if (menu) {
-    const isHidden = menu.style.display === 'none' || menu.style.display === '';
-    menu.style.display = isHidden ? 'block' : 'none';
+    // जर मेनू बंद असेल तर उघडा, उघडा असेल तर बंद करा
+    if (menu.style.display === 'block') {
+      menu.style.display = 'none';
+    } else {
+      menu.style.display = 'block';
+    }
   }
 }
 
-// २. कॅमेरा किंवा गॅलरी निवडल्यास त्यानुसार इनपुट ट्रिगर करणे
-function openSource(sourceType) {
-  document.getElementById('upload-menu').style.display = 'none'; // मेनू बंद करणे
+// २. सोर्सनुसार कॅमेरा किंवा गॅलरी उघडणे
+function openSource(type) {
+  const inputMenu = document.getElementById('input-upload-menu');
+  const sidebarMenu = document.getElementById('upload-menu');
   
-  if (sourceType === 'camera') {
-    document.getElementById('camera-input').click();
-  } else if (sourceType === 'gallery') {
-    document.getElementById('gallery-input').click();
+  if (inputMenu) inputMenu.style.display = 'none';
+  if (sidebarMenu) sidebarMenu.style.display = 'none';
+
+  if (type === 'camera') {
+    const cam = document.getElementById('camera-input');
+    if (cam) cam.click();
+  } else if (type === 'gallery') {
+    const gal = document.getElementById('gallery-input');
+    if (gal) gal.click();
   }
 }
 
-// ३. स्क्रीनवर कुठेही बाहेर क्लिक केल्यास मेनू आपोआप बंद होणे
-document.addEventListener('click', function(event) {
-  const menu = document.getElementById('upload-menu');
-  if (menu && menu.style.display === 'block') {
-    menu.style.display = 'none';
+// ३. स्क्रीनवर बाहेर कुठेही क्लिक केल्यास मेनू बंद करणे
+document.addEventListener('click', function(e) {
+  const inputMenu = document.getElementById('input-upload-menu');
+  const sidebarMenu = document.getElementById('upload-menu');
+  
+  // जर क्लिक पॉपअपच्या आत नसेल तर बंद करा
+  if (inputMenu && !inputMenu.contains(e.target)) {
+    inputMenu.style.display = 'none';
+  }
+  if (sidebarMenu && !sidebarMenu.contains(e.target)) {
+    sidebarMenu.style.display = 'none';
   }
 });
 </script>
