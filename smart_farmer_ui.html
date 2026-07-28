@@ -413,7 +413,7 @@ body{
   <div class="input-bar">
     <button class="btn-action btn-voice" id="voice-btn" title="बोला" onclick="toggleVoice()">🎤</button>
     <input class="input-field" id="inp" type="text" placeholder="प्रश्न विचारा..." autocomplete="off" onkeydown="handleKey(event)"/>
-    <button class="btn-action" title="फोटो" onclick="document.getElementById('file-input').click()">📷</button>
+    <button class="btn-action" title="फोटो" onclick="toggleUploadMenu(event)">📷</button>
     <button class="btn-action btn-send" title="पाठवा" onclick="handleSend()">➤</button>
     <button class="btn-action btn-stop" id="voice-stop-btn" title="आवाज थांबवा" onclick="stopVoiceOutput()">⏹</button>
   </div>
