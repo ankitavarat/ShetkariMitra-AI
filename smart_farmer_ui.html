@@ -414,6 +414,15 @@ body{
     <button class="btn-action btn-voice" id="voice-btn" title="बोला" onclick="toggleVoice()">🎤</button>
     <input class="input-field" id="inp" type="text" placeholder="प्रश्न विचारा..." autocomplete="off" onkeydown="handleKey(event)"/>
     <button class="btn-action" title="फोटो" onclick="toggleUploadMenu(event)">📷</button>
+    <!-- क्लिक केल्यावर येणारा १ मेनु पॉपअप (कॅमेरा + गॅलरी) -->
+    <div id="upload-menu" class="upload-popup-menu" style="display: none; position: absolute; bottom: 70px; right: 60px; background: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); padding: 8px; width: 180px; z-index: 1000; border: 1px solid rgba(0,0,0,0.1);">
+      <div onclick="openSource('camera')" style="padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 14px; font-weight: 600; color: #333;">
+       📷 कॅमेरा (Camera)
+      </div>
+      <div onclick="openSource('gallery')" style="padding: 12px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; font-weight: 600; color: #333;">
+       🖼️ गॅलरी (Gallery)
+      </div>
+    </div>
     <button class="btn-action btn-send" title="पाठवा" onclick="handleSend()">➤</button>
     <button class="btn-action btn-stop" id="voice-stop-btn" title="आवाज थांबवा" onclick="stopVoiceOutput()">⏹</button>
   </div>
@@ -689,11 +698,17 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// १. मुख्य बटणावर क्लिक केल्यावर मेनू उघडणे/बंद करणे
 function toggleUploadMenu(event) {
-  event.stopPropagation(); // क्लिक बाहेर जाऊ न देणे
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation(); // यामुळे क्लिक बाहेर/साइडबारला जाणार नाही
+  }
+  
   const menu = document.getElementById('upload-menu');
-  menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+  if (menu) {
+    const isHidden = menu.style.display === 'none' || menu.style.display === '';
+    menu.style.display = isHidden ? 'block' : 'none';
+  }
 }
 
 // २. कॅमेरा किंवा गॅलरी निवडल्यास त्यानुसार इनपुट ट्रिगर करणे
