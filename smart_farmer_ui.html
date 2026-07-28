@@ -354,7 +354,7 @@ body{
     <div class="s-card">
       <div class="s-card-title"><span class="dot"></span>रोग ओळख</div>
   
-      <div class="upload-area" onclick="toggleUploadMenu(event)" style="position: relative; cursor: pointer;">
+      <div class="upload-area" style="position: relative; padding: 25px 15px; text-align: center;">
         <div class="upload-icon">🔬</div>
         <div class="upload-mr">पानाचा फोटो अपलोड करा</div>
         <div class="upload-en">Upload Leaf Photo for Disease Detection</div>
@@ -689,21 +689,16 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// १. आयकॉन किंवा कार्डवर क्लिक केल्यावर मेनू उघडणे/बंद करणे
+// १. मुख्य बटणावर क्लिक केल्यावर मेनू उघडणे/बंद करणे
 function toggleUploadMenu(event) {
-  event.stopPropagation(); // क्लिक इव्हेंट ब्लॉक करण्यासाठी
+  event.stopPropagation(); // क्लिक बाहेर जाऊ न देणे
   const menu = document.getElementById('upload-menu');
-  
-  if (menu) {
-    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-  }
+  menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
 }
 
-// २. मेनूमधून कॅमेरा किंवा गॅलरी निवडल्यावर
-function openSource(sourceType, event) {
-  event.stopPropagation(); // मेनू बंद होताना इव्हेंट थांबवणे
-  const menu = document.getElementById('upload-menu');
-  if (menu) menu.style.display = 'none'; 
+// २. कॅमेरा किंवा गॅलरी निवडल्यास त्यानुसार इनपुट ट्रिगर करणे
+function openSource(sourceType) {
+  document.getElementById('upload-menu').style.display = 'none'; // मेनू बंद करणे
   
   if (sourceType === 'camera') {
     document.getElementById('camera-input').click();
@@ -712,7 +707,7 @@ function openSource(sourceType, event) {
   }
 }
 
-// ३. स्क्रीनवर बाहेर कुठेही टच केल्यास मेनू आपोआप बंद होईल
+// ३. स्क्रीनवर कुठेही बाहेर क्लिक केल्यास मेनू आपोआप बंद होणे
 document.addEventListener('click', function(event) {
   const menu = document.getElementById('upload-menu');
   if (menu && menu.style.display === 'block') {
