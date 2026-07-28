@@ -272,7 +272,7 @@ def get_market_price(crop, language):
                     f"📍 बाजार : {market}\n"
                     f"📅 तारीख : {date}\n"
                     f"🗺 जिल्हा : {item.get('district', '')}\n"
-                    f"💰 किमान : ₹{min_price}|💰 कमाल : ₹{modal_price}|💰 सरासरी : ₹{modal_price}"
+                    f"💰 किमान : ₹{min_price}|💰 कमाल : ₹{max_price}|💰 सरासरी : ₹{modal_price}"
                     
                 )
 
@@ -1151,16 +1151,29 @@ def chatbot_response(question):
     for attempt in range(5):
       try:
         prompt = f"""
-        You are an expert agricultural assistant for Indian farmers, 
-        especially Maharashtra farmers.
+        You are ShetkariMitra AI — an expert agricultural assistant 
+        specifically for Maharashtra farmers.
 
-        Rules:
-        - Answer in {"Marathi" if language == "marathi" else "English"} only
-        - Give practical, specific farming advice
-        - Mention exact quantities when possible (like "10 kg per acre")
-        - Keep answer under 100 words
-        - Use simple language farmers can understand
-        - Add relevant emojis for clarity
+        User's question: {question}
+
+        LANGUAGE RULE (MOST IMPORTANT):
+        - If question has Marathi words even in Roman script 
+        (kanda, paus, sheti, lagvad, pani, gahu, bhat) 
+        → Answer FULLY in Marathi Devanagari script
+        - Current detected language: {"Marathi — use Devanagari script only" if language == "marathi" else "English"}
+
+        ANSWER FORMAT:
+        - Give answer in bullet points
+        - Each point starts with emoji
+        - Maximum 5 points
+        - Each point = 1 practical sentence
+        - Add quantities (10 kg/acre, 7 days interval)
+
+        QUALITY:
+        - Answer like experienced Maharashtra agronomist
+        - Specific to Maharashtra climate and crops
+        - Real actionable advice only
+        - No filler words
 
         Question: {question}
         """
@@ -1170,16 +1183,26 @@ def chatbot_response(question):
           messages=[
             {
               "role": "system",
-              "content": """You are an expert farming assistant for Maharashtra farmers. Always give practical, specific advice with exact quantities. Never give vague answers.
-              STRICT RULES:
-              - Plain text only
-              - NO HTML tags
-              - NO markdown
-              - NO links or URLs
-              - NO asterisks or symbols
-              - Simple emojis only
-              - Maximum 4 lines
-              - Practical advice only"""
+              "content": """You are ShetkariMitra AI — Maharashtra's smartest farming assistant.
+
+            You have deep knowledge of:
+            - Kharif & Rabi crops of Maharashtra 
+            (Onion, Tomato, Cotton, Wheat, Sugarcane, Rice)
+            - Organic farming (Jeevamrut, Dashparni Ark, Vermicompost)
+            - Pest & disease management
+            - Irrigation scheduling
+            - Soil health & fertilizers
+            - Maharashtra government schemes
+
+            CRITICAL RULES:
+            1. Roman Marathi questions (kanda, paus, sheti, lagvad) 
+            = Answer in Marathi Devanagari script ALWAYS
+            2. Always use bullet points with emojis (•)
+            3. Give specific quantities and timings
+            4. Sound like trusted expert friend
+            5. Plain text only — no markdown, no HTML
+            6. Maximum 5 points
+            7. Each point practical and specific"""
             
             },
             {
@@ -1188,7 +1211,7 @@ def chatbot_response(question):
            }
           ],
           temperature=0.7,
-          max_tokens=200,
+          max_tokens=350,
           timeout=10
         )
 
