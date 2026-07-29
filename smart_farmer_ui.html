@@ -701,52 +701,59 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// १. इनपुट बारमधील फोटो बटणावर क्लिक केल्यावर मेनू उघडणे / बंद करणे
+// १. साइडबारमधील कार्डसाठी पॉपअप मेनू (Sidebar Popup)
+function toggleUploadMenu(event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  const menu = document.getElementById('upload-menu');
+  if (menu) {
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+  }
+}
+
+// २. इनपुट बारमधील 📷 बटणासाठी पॉपअप मेनू (Input Bar Popup)
 function toggleInputUploadMenu(event) {
   if (event) {
     event.preventDefault();
     event.stopPropagation();
   }
-  
   const menu = document.getElementById('input-upload-menu');
   if (menu) {
-    // जर मेनू बंद असेल तर उघडा, उघडा असेल तर बंद करा
-    if (menu.style.display === 'block') {
-      menu.style.display = 'none';
-    } else {
-      menu.style.display = 'block';
-    }
+    menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
   }
 }
 
-// २. सोर्सनुसार कॅमेरा किंवा गॅलरी उघडणे
+// ३. कॅमेरा किंवा गॅलरी उघडणारे मुख्य फंक्शन
 function openSource(type) {
-  const inputMenu = document.getElementById('input-upload-menu');
+  // १. दोन्ही ठिकाणचे पॉपअप मेनू बंद करणे
   const sidebarMenu = document.getElementById('upload-menu');
+  const inputMenu = document.getElementById('input-upload-menu');
   
-  if (inputMenu) inputMenu.style.display = 'none';
   if (sidebarMenu) sidebarMenu.style.display = 'none';
+  if (inputMenu) inputMenu.style.display = 'none';
 
+  // २. कॅमेरा किंवा गॅलरीचे Input Trigger करणे
   if (type === 'camera') {
-    const cam = document.getElementById('camera-input');
-    if (cam) cam.click();
+    const camInput = document.getElementById('camera-input');
+    if (camInput) camInput.click();
   } else if (type === 'gallery') {
-    const gal = document.getElementById('gallery-input');
-    if (gal) gal.click();
+    const galInput = document.getElementById('gallery-input');
+    if (galInput) galInput.click();
   }
 }
 
-// ३. स्क्रीनवर बाहेर कुठेही क्लिक केल्यास मेनू बंद करणे
+// ४. स्क्रीनवर बाहेर कुठेही क्लिक केल्यास दोन्ही मेनू बंद करणे
 document.addEventListener('click', function(e) {
-  const inputMenu = document.getElementById('input-upload-menu');
   const sidebarMenu = document.getElementById('upload-menu');
+  const inputMenu = document.getElementById('input-upload-menu');
   
-  // जर क्लिक पॉपअपच्या आत नसेल तर बंद करा
-  if (inputMenu && !inputMenu.contains(e.target)) {
-    inputMenu.style.display = 'none';
-  }
   if (sidebarMenu && !sidebarMenu.contains(e.target)) {
     sidebarMenu.style.display = 'none';
+  }
+  if (inputMenu && !inputMenu.contains(e.target)) {
+    inputMenu.style.display = 'none';
   }
 });
 </script>
