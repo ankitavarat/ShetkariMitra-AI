@@ -125,4 +125,4 @@ if __name__ == "__main__":
     print("   Open smart_farmer_ui.html in Chrome")
     print("=" * 50)
     port = int(os.getenv("PORT", 5000))
-    app.run(debug=False, host="0.0.0.0", port=port, threaded=True) ye flask ki file hai aage me tumhe mera backend.py ka code deti hu
+    app.run(debug=False, host="0.0.0.0", port=port, threaded=True) 
