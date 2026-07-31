@@ -274,6 +274,29 @@ body{
 }
 
 .bottom-nav { display: none !important; }
+
+  <!-- आपकी पुरानी CSS स्टाइल्स यहाँ समाप्त होती हैं -->
+  
+  /* === यहाँ नया CSS चिपकाएँ === */
+  .user-nav-area { position: relative; }
+  .btn-login-nav { background: #ffffff; color: #059669; padding: 8px 16px; border-radius: 20px; border: none; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .profile-avatar { width: 38px; height: 38px; background: #047857; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid #fff; cursor: pointer; }
+  .dropdown-menu { display: none; position: absolute; right: 0; top: 48px; background: #ffffff; min-width: 170px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); border-radius: 12px; overflow: hidden; z-index: 100; }
+  .dropdown-menu.active { display: block; }
+  .dropdown-item { padding: 12px 16px; color: #333; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .dropdown-item:hover { background: #f3f4f6; }
+  .dropdown-item.logout { color: #e11d48; border-top: 1px solid #f3f4f6; }
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 1000; justify-content: center; align-items: center; padding: 20px; }
+  .modal-overlay.active { display: flex; }
+  .auth-card { background: #fff; width: 100%; max-width: 360px; border-radius: 20px; padding: 25px; position: relative; }
+  .close-modal { position: absolute; right: 15px; top: 15px; border: none; background: #f3f4f6; border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; }
+  .auth-title { font-size: 18px; font-weight: 800; color: #1e293b; margin-bottom: 4px; }
+  .auth-subtitle { font-size: 12px; color: #64748b; margin-bottom: 16px; }
+  .auth-input { width: 100%; padding: 10px 14px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 14px; margin-bottom: 10px; outline: none; }
+  .btn-auth-submit { width: 100%; padding: 10px; border-radius: 10px; border: none; background: #10B981; color: #fff; font-weight: 700; font-size: 14px; cursor: pointer; }
+  .auth-toggle-text { text-align: center; font-size: 12px; margin-top: 14px; color: #475569; }
+  .auth-toggle-text span { color: #10B981; font-weight: 700; cursor: pointer; }
+
 </style>
 </head>
 <body>
@@ -291,6 +314,10 @@ body{
     </div>
     <div class="header-right">
       <div class="status-pill"><div class="status-dot"></div>ऑनलाइन</div>
+    </div>
+
+    <div class="user-nav-area" id="userNavArea">
+      <button class="btn-login-nav" onclick="openAuthModal('login')">लॉगिन / रजिस्टर 🚀</button>
     </div>
   </header>
 
@@ -756,6 +783,143 @@ document.addEventListener('click', function(e) {
     inputMenu.style.display = 'none';
   }
 });
+
+    // आपका पुराना JavaScript कोड यहाँ रहेगा...
+
+
+    // === 👇 यहाँ </script> से ठीक पहले नया JS कोड डालें ===
+    function toggleDropdown() {
+      const menu = document.getElementById('dropdownMenu');
+      if(menu) menu.classList.toggle('active');
+    }
+
+    function openAuthModal(type) {
+      switchForm(type);
+      document.getElementById('authModal').classList.add('active');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.remove('active');
+    }
+
+    function switchForm(type) {
+      document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+      document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
+    }
+
+    async function submitLogin() {
+      const mobile = document.getElementById('loginMobile').value.trim();
+      const password = document.getElementById('loginPass').value.trim();
+      if(!mobile || !password) return alert('कृपया मोबाईल नंबर आणि पासवर्ड टाका.');
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/login`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ mobile, password })
+        });
+        const data = await res.json();
+        if(res.ok) {
+          alert(data.message);
+          closeAuthModal();
+          updateUserUI(data.user_name);
+        } else {
+          alert(data.message || 'लॉगिन अयशस्वी.');
+        }
+      } catch { alert('सर्व्हरशी संपर्क होऊ शकला नाही.'); }
+    }
+
+    async function submitRegister() {
+      const name = document.getElementById('regName').value.trim();
+      const mobile = document.getElementById('regMobile').value.trim();
+      const district = document.getElementById('regDistrict').value.trim();
+      const password = document.getElementById('regPass').value.trim();
+      if(!name || !mobile || !password) return alert('कृपया सर्व आवश्यक माहिती भरा.');
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/register`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ name, mobile, district, password })
+        });
+        const data = await res.json();
+        if(res.ok) {
+          alert(data.message);
+          switchForm('login');
+        } else {
+          alert(data.message || 'रजिस्ट्रेशन अयशस्वी.');
+        }
+      } catch { alert('सर्व्हरशी संपर्क होऊ शकला नाही.'); }
+    }
+
+    function updateUserUI(userName) {
+      const navArea = document.getElementById('userNavArea');
+      if (userName) {
+        const firstLetter = userName.charAt(0).toUpperCase();
+        navArea.innerHTML = `
+          <div class="profile-avatar" id="avatarBtn" onclick="toggleDropdown()">${firstLetter}</div>
+          <div class="dropdown-menu" id="dropdownMenu">
+            <div style="padding: 10px 16px; font-weight: bold; font-size: 12px; color: #64748b; border-bottom: 1px solid #f3f4f6;">👤 ${userName}</div>
+            <div class="dropdown-item" onclick="loadHistory()">📜 History (इतिहास)</div>
+            <div class="dropdown-item logout" onclick="logoutUser()">🚪 Logout (बाहेर पडा)</div>
+          </div>
+        `;
+      }
+    }
+
+    async function logoutUser() {
+      await fetch(`${BACKEND_URL}/logout`);
+      location.reload();
+    }
+
+    async function loadHistory() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/history`);
+        const data = await res.json();
+        if (res.ok && data.history.length > 0) {
+          document.getElementById('chatBox').innerHTML = '';
+          data.history.forEach(item => {
+            addMessage(item.question, 'user');
+            addMessage(item.answer, 'bot');
+          });
+          toggleDropdown();
+        } else if (data.history.length === 0) {
+          alert('📜 तुमचा जुना कोणताही इतिहास नाही.');
+        } else {
+          alert(data.message || 'इतिहास लोड करता आला नाही.');
+        }
+      } catch (err) {
+        alert('इतिहास लोड करताना त्रुटी आली.');
+      }
+    }
 </script>
+  <!-- 👇 </body> टैग से ठीक पहले यह पॉप-अप मोडल कोड डालें -->
+  <div class="modal-overlay" id="authModal">
+    <div class="auth-card">
+      <button class="close-modal" onclick="closeAuthModal()">✕</button>
+      
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <div class="auth-title">लॉगिन करा 🌾</div>
+        <div class="auth-subtitle">तुमचे खाते वापरून पूर्ण लाभ घ्या.</div>
+        <input type="tel" id="loginMobile" class="auth-input" placeholder="मोबाईल नंबर">
+        <input type="password" id="loginPass" class="auth-input" placeholder="पासवर्ड">
+        <button class="btn-auth-submit" onclick="submitLogin()">लॉगिन करा</button>
+        <div class="auth-toggle-text">खाते नाही? <span onclick="switchForm('register')">नवीन खाते बनवा</span></div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none;">
+        <div class="auth-title">नवीन खाते बनवा 🚜</div>
+        <div class="auth-subtitle">शेतकरी मित्र AI परिवारात स्वागत आहे.</div>
+        <input type="text" id="regName" class="auth-input" placeholder="पूर्ण नाव">
+        <input type="tel" id="regMobile" class="auth-input" placeholder="मोबाईल नंबर">
+        <input type="text" id="regDistrict" class="auth-input" placeholder="जिल्हा (उदा. अहमदनगर)">
+        <input type="password" id="regPass" class="auth-input" placeholder="पासवर्ड">
+        <button class="btn-auth-submit" onclick="submitRegister()">रजिस्टर करा</button>
+        <div class="auth-toggle-text">आधीच खाते आहे? <span onclick="switchForm('login')">लॉगिन करा</span></div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
