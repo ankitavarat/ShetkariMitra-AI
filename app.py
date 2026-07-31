@@ -9,10 +9,11 @@ Run:
     python app.py
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
 import os
 import tempfile
+import sqlite3
 
 from backend import (
     chatbot_response,
@@ -22,7 +23,8 @@ from backend import (
 )
 
 app = Flask(__name__)
-CORS(app)
+app.secret_key = "shetkari_secret_key_123" # Session के लिए आवश्यक
+CORS(app, supports_credentials=True)
 
 
 @app.route("/")
@@ -45,6 +47,22 @@ def chat():
         return jsonify({"answer": "Please enter a question."}), 400
 
     answer = chatbot_response(question)
+
+    # अगर किसान लॉगिन है, तो चैट 'chatbot.db' में सेव होगी
+    user_mobile = session.get("user_mobile")
+    if user_mobile:
+        try:
+            conn = sqlite3.connect("chatbot.db")
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO chat_history (mobile, question, answer) VALUES (?, ?, ?)",
+                (user_mobile, question, answer)
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print("History Save Error:", e)
+
     return jsonify({"answer": answer})
 
 
@@ -103,6 +121,81 @@ def detect():
         pass
 
     return jsonify({"result": result})
+
+
+# -------------------- AUTH & HISTORY (NEW ADDED) --------------------
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.get_json() or {}
+    name = data.get("name", "").strip()
+    mobile = data.get("mobile", "").strip()
+    district = data.get("district", "").strip()
+    password = data.get("password", "").strip()
+
+    if not name or not mobile or not password:
+        return jsonify({"message": "कृपया सर्व आवश्यक माहिती भरा."}), 400
+
+    try:
+        conn = sqlite3.connect("chatbot.db")
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO users (name, mobile, district, password) VALUES (?, ?, ?, ?)",
+            (name, mobile, district, password)
+        )
+        conn.commit()
+        conn.close()
+        return jsonify({"message": "नोंदणी यशस्वी झाली! आता लॉगिन करा."}), 200
+    except sqlite3.IntegrityError:
+        return jsonify({"message": "हा मोबाईल नंबर आधीच नोंदणीकृत आहे."}), 400
+    except Exception as e:
+        return jsonify({"message": "डेटाबेस त्रुटी आली."}), 500
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json() or {}
+    mobile = data.get("mobile", "").strip()
+    password = data.get("password", "").strip()
+
+    conn = sqlite3.connect("chatbot.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, password FROM users WHERE mobile = ?", (mobile,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if not user or user[1] != password:
+        return jsonify({"message": "मोबाईल नंबर किंवा पासवर्ड चुकीचा आहे."}), 401
+
+    session["user_name"] = user[0]
+    session["user_mobile"] = mobile
+
+    return jsonify({"message": f"स्वागत आहे, {user[0]}!", "user_name": user[0]}), 200
+
+
+@app.route("/logout", methods=["GET"])
+def logout():
+    session.clear()
+    return jsonify({"message": "लॉगआउट यशस्वी झाले."}), 200
+
+
+@app.route("/history", methods=["GET"])
+def history():
+    user_mobile = session.get("user_mobile")
+    if not user_mobile:
+        return jsonify({"message": "कृपया आधी लॉगिन करा.", "history": []}), 401
+
+    conn = sqlite3.connect("chatbot.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT question, answer, timestamp FROM chat_history WHERE mobile = ? ORDER BY id ASC",
+        (user_mobile,)
+    )
+    rows = cursor.fetchall()
+    conn.close()
+
+    history_list = [{"question": row[0], "answer": row[1], "time": row[2]} for row in rows]
+    return jsonify({"history": history_list}), 200
 
 
 # -------------------- STATIC FILES --------------------
