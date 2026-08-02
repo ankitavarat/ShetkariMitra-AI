@@ -14,6 +14,8 @@ from flask_cors import CORS
 import os
 import tempfile
 import sqlite3
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 from backend import (
     chatbot_response,
@@ -166,7 +168,8 @@ def login():
 
     if not user or user[1] != password:
         return jsonify({"message": "मोबाईल नंबर किंवा पासवर्ड चुकीचा आहे."}), 401
-
+        
+    session.permanent = True
     session["user_name"] = user[0]
     session["user_mobile"] = mobile
 
@@ -177,6 +180,13 @@ def login():
 def logout():
     session.clear()
     return jsonify({"message": "लॉगआउट यशस्वी झाले."}), 200
+
+@app.route("/check-auth", methods=["GET"])
+def check_auth():
+    user_name = session.get("user_name")
+    if user_name:
+        return jsonify({"logged_in": True, "user_name": user_name}), 200
+    return jsonify({"logged_in": False}), 200
 
 
 @app.route("/history", methods=["GET"])
