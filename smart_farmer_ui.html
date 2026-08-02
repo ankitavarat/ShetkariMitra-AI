@@ -995,6 +995,18 @@ async function loadHistory() {
     alert('इतिहास लोड करताना त्रुटी आली.');
   }
 }
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('/check-auth');
+    const data = await res.json();
+    if (data.logged_in) {
+      updateUserUI(data.user_name); // अगर पहले से लॉगिन है तो अवतार दिखेगा
+    }
+  } catch (e) {
+    console.log("Auth check error", e);
+  }
+});  
     
 </script>
   <!-- LOGIN / REGISTER POPUP MODAL -->
