@@ -15,7 +15,7 @@ import os
 import tempfile
 import sqlite3
 from datetime import timedelta
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+
 
 from backend import (
     chatbot_response,
@@ -27,6 +27,7 @@ from backend import (
 app = Flask(__name__)
 app.secret_key = "shetkari_secret_key_123" # Session के लिए आवश्यक
 CORS(app, supports_credentials=True)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 
 @app.route("/")
