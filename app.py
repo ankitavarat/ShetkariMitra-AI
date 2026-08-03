@@ -205,7 +205,20 @@ def history():
     rows = cursor.fetchall()
     conn.close()
 
-    history_list = [{"question": row[0], "answer": row[1], "time": row[2]} for row in rows]
+    history_list = []
+    for row in rows:
+        q_text = row[1]
+        # सवाल का पहला छोटा हिस्सा (Short Name / Title)
+        short_title = q_text[:25] + "..." if len(q_text) > 25 else q_text
+        
+        history_list.append({
+            "id": row[0],
+            "title": short_title,
+            "full_question": row[1],
+            "answer": row[2],
+            "time": row[3]
+        })
+
     return jsonify({"history": history_list}), 200
 
 
