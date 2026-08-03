@@ -199,7 +199,7 @@ def history():
     conn = sqlite3.connect("chatbot.db")
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT question, answer, timestamp FROM chat_history WHERE mobile = ? ORDER BY id ASC",
+        "SELECT id, question, answer, timestamp FROM chat_history WHERE mobile = ? ORDER BY id ASC",
         (user_mobile,)
     )
     rows = cursor.fetchall()
@@ -214,7 +214,7 @@ def history():
         history_list.append({
             "id": row[0],
             "title": short_title,
-            "full_question": row[1],
+            "question": row[1],
             "answer": row[2],
             "time": row[3]
         })
