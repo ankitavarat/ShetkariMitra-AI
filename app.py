@@ -1,14 +1,21 @@
 """
-app.py — Flask bridge server (Connected with Supabase PostgreSQL)
+app.py — Flask bridge server
 Connects smart_farmer_ui.html with your existing backend.py
+
+Install:
+    pip install flask flask-cors
+
+Run:
+    python app.py
 """
 
 from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
 import os
 import tempfile
-import psycopg2
+import sqlite3
 from datetime import timedelta
+
 
 from backend import (
     chatbot_response,
@@ -17,60 +24,10 @@ from backend import (
     get_weather_by_coords,
 )
 
-# -------------------- APP SETUP --------------------
-
 app = Flask(__name__)
-app.secret_key = "shetkari_secret_key_123"
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
+app.secret_key = "shetkari_secret_key_123" # Session के लिए आवश्यक
 CORS(app, supports_credentials=True)
-
-# 🟢 SUPABASE / POSTGRESQL CONNECTION SETUP
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-def get_db():
-    return psycopg2.connect(DATABASE_URL)
-
-def init_db():
-    """सर्वर शुरू होते ही Supabase में टेबल अपने आप बनाएगा"""
-    if not DATABASE_URL:
-        print("⚠️ DATABASE_URL set nahi hai. Render par Environment Variable check karein.")
-        return
-
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-        
-        # 1. Users Table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100),
-                mobile VARCHAR(20) UNIQUE,
-                district VARCHAR(100),
-                password VARCHAR(100)
-            );
-        ''')
-        
-        # 2. Chat History Table
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS chat_history (
-                id SERIAL PRIMARY KEY,
-                mobile VARCHAR(20),
-                question TEXT,
-                answer TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        ''')
-        
-        conn.commit()
-        cursor.close()
-        conn.close()
-        print("✅ Supabase PostgreSQL Database Initialized Successfully!")
-    except Exception as e:
-        print("❌ DB Init Error:", e)
-
-# ऐप स्टार्ट होते ही टेबल्स चेक/क्रिएट होंगे
-init_db()
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 
 @app.route("/")
@@ -94,18 +51,17 @@ def chat():
 
     answer = chatbot_response(question)
 
-    # अगर किसान लॉगिन है, तो चैट Supabase Database में सेव होगी (%s का इस्तेमाल)
+    # अगर किसान लॉगिन है, तो चैट 'chatbot.db' में सेव होगी
     user_mobile = session.get("user_mobile")
-    if user_mobile and DATABASE_URL:
+    if user_mobile:
         try:
-            conn = get_db()
+            conn = sqlite3.connect("chatbot.db")
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO chat_history (mobile, question, answer) VALUES (%s, %s, %s)",
+                "INSERT INTO chat_history (mobile, question, answer) VALUES (?, ?, ?)",
                 (user_mobile, question, answer)
             )
             conn.commit()
-            cursor.close()
             conn.close()
         except Exception as e:
             print("History Save Error:", e)
@@ -170,7 +126,7 @@ def detect():
     return jsonify({"result": result})
 
 
-# -------------------- AUTH & HISTORY (SUPABASE CONNECTED) --------------------
+# -------------------- AUTH & HISTORY (NEW ADDED) --------------------
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -184,20 +140,18 @@ def register():
         return jsonify({"message": "कृपया सर्व आवश्यक माहिती भरा."}), 400
 
     try:
-        conn = get_db()
+        conn = sqlite3.connect("chatbot.db")
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO users (name, mobile, district, password) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO users (name, mobile, district, password) VALUES (?, ?, ?, ?)",
             (name, mobile, district, password)
         )
         conn.commit()
-        cursor.close()
         conn.close()
         return jsonify({"message": "नोंदणी यशस्वी झाली! आता लॉगिन करा."}), 200
-    except psycopg2.IntegrityError:
+    except sqlite3.IntegrityError:
         return jsonify({"message": "हा मोबाईल नंबर आधीच नोंदणीकृत आहे."}), 400
     except Exception as e:
-        print("Register Error:", e)
         return jsonify({"message": "डेटाबेस त्रुटी आली."}), 500
 
 
@@ -207,32 +161,26 @@ def login():
     mobile = data.get("mobile", "").strip()
     password = data.get("password", "").strip()
 
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT name, password FROM users WHERE mobile = %s", (mobile,))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
+    conn = sqlite3.connect("chatbot.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT name, password FROM users WHERE mobile = ?", (mobile,))
+    user = cursor.fetchone()
+    conn.close()
 
-        if not user or user[1] != password:
-            return jsonify({"message": "मोबाईल नंबर किंवा पासवर्ड चुकीचा आहे."}), 401
-            
-        session.permanent = True
-        session["user_name"] = user[0]
-        session["user_mobile"] = mobile
+    if not user or user[1] != password:
+        return jsonify({"message": "मोबाईल नंबर किंवा पासवर्ड चुकीचा आहे."}), 401
+        
+    session.permanent = True
+    session["user_name"] = user[0]
+    session["user_mobile"] = mobile
 
-        return jsonify({"message": f"स्वागत आहे, {user[0]}!", "user_name": user[0]}), 200
-    except Exception as e:
-        print("Login Error:", e)
-        return jsonify({"message": "लॉगिन करताना त्रुटी आली."}), 500
+    return jsonify({"message": f"स्वागत आहे, {user[0]}!", "user_name": user[0]}), 200
 
 
 @app.route("/logout", methods=["GET"])
 def logout():
     session.clear()
     return jsonify({"message": "लॉगआउट यशस्वी झाले."}), 200
-
 
 @app.route("/check-auth", methods=["GET"])
 def check_auth():
@@ -248,34 +196,20 @@ def history():
     if not user_mobile:
         return jsonify({"message": "कृपया आधी लॉगिन करा.", "history": []}), 401
 
-    try:
-        conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute(
-            "SELECT question, answer FROM chat_history WHERE mobile = %s ORDER BY id DESC",
-            (user_mobile,)
-        )
-        rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
+    conn = sqlite3.connect("chatbot.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT question, answer, timestamp FROM chat_history WHERE mobile = ? ORDER BY id ASC",
+        (user_mobile,)
+    )
+    rows = cursor.fetchall()
+    conn.close()
 
-        history_list = []
-        for row in rows:
-            q_text = row[0]
-            short_title = q_text[:25] + "..." if len(q_text) > 25 else q_text
-            history_list.append({
-                "title": short_title,
-                "question": row[0],
-                "answer": row[1]
-            })
-
-        return jsonify({"history": history_list}), 200
-    except Exception as e:
-        print("History Fetch Error:", e)
-        return jsonify({"message": "इतिहास लोड करता आला नाही.", "history": []}), 500
+    history_list = [{"question": row[0], "answer": row[1], "time": row[2]} for row in rows]
+    return jsonify({"history": history_list}), 200
 
 
-# -------------------- STATIC FILES (PWA SUPPORT) --------------------
+# -------------------- STATIC FILES --------------------
 
 @app.route("/manifest.json")
 def serve_manifest():
