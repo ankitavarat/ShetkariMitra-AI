@@ -847,6 +847,40 @@ def detect_disease(filepath, language):
                 "📷 Please upload a clear, close-up leaf photo.\n"
                 "💡 Take photo in natural light for better results."
             )
+
+def extract_city_from_question(question):
+    skip_words = [
+        "weather", "havaman", "हवामान", "आजचे", "आजचं",
+        "उद्या", "उद्याचे", "पाऊस", "पडणार", "आहे", "का",
+        "मध्ये", "सांगा", "काय", "कसा", "कसे", "aaj",
+        "udya", "paus", "padnar", "aahe", "ka", "madhe",
+        "sanga", "today", "tomorrow", "rain", "weather",
+        "forecast", "batao", "bata", "kya", "hai", "hoga",
+        "padnar", "sandha", "kiti", "kitiv"
+    ]
+    words = question.split()
+    for word in words:
+        clean_word = word.strip("?.,!।")
+        if clean_word.lower() in skip_words:
+            continue
+        if any('\u0900' <= c <= '\u097F' for c in clean_word):
+            if clean_word in ["हवामान","पाऊस","उद्या","आजचे","मध्ये","आहे","का","सांगा","पडणार"]:
+                continue
+            try:
+                from indic_transliteration import sanscript
+                roman = sanscript.transliterate(
+                    clean_word,
+                    sanscript.DEVANAGARI,
+                    sanscript.ITRANS
+                )
+                roman = roman.replace('aa','a').replace('ii','i')
+                return roman.capitalize()
+            except:
+                return clean_word
+        else:
+            if len(clean_word) > 2:
+                return clean_word.capitalize()
+    return "Pune"
 # ---------------- MAIN CHATBOT ----------------
 def chatbot_response(question):
 
@@ -907,7 +941,7 @@ def chatbot_response(question):
 
      words = question.split()
 
-     city = "Pune"
+     city = extract_city_from_question(question)
 
      for word in words:
 
@@ -952,7 +986,7 @@ def chatbot_response(question):
 
         words = question.split()
 
-        city = "Pune"
+        city = extract_city_from_question(question)
 
         for word in words:
 
