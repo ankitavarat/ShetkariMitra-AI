@@ -959,27 +959,6 @@ def chatbot_response(question):
      print("Question :", question)
      print("Detected City :", city)   
         
-
-     for word in words:
-
-        if word not in [
-            "aaj",
-            "paus",
-            "padnar",
-            "aahe",
-            "ka",
-            "udya",
-            "tomorrow",
-            "rain",
-            "madhe",
-            "gahu"
-        ]:
-
-            city = word
-            break
-
-     print("Detected City:", city)
-
      if intent == "today_rain":
 
         return get_today_rain(
