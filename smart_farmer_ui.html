@@ -213,7 +213,7 @@ body{
   .menu-toggle {
     display: block;
   }
-  
+
   .sidebar {
     position: fixed;
     top: 72px; left: -100%; bottom: 0;
@@ -238,7 +238,7 @@ body{
   .sidebar-overlay.active { display: block !important; }
 
   .chat-area { grid-column: 1; }
-  
+
   /* MOBILE INPUT BAR OPTIMIZATION */
   .input-bar { 
     grid-column: 1; 
@@ -248,11 +248,11 @@ body{
   .messages { padding: 16px; gap: 14px; }
   .msg { max-width: 88%; }
   .msg-bubble { font-size: 14.5px; padding: 12px 15px; }
-  
+
   .header { padding: 0 16px; }
   .header-text h1 { font-size: 18px; }
   .header-text p { display: none; }
-  
+
   /* मोबाईलवर 'ऑनलाइन' वर्ड व्यवस्थित करण्यासाठी */
   .status-pill { 
     padding: 4px 8px !important; 
@@ -539,12 +539,12 @@ body{
 
     <div class="s-card">
       <div class="s-card-title"><span class="dot"></span>रोग ओळख</div>
-  
+
       <div class="upload-area" style="position: relative; padding: 25px 15px; text-align: center;">
         <div class="upload-icon">🔬</div>
         <div class="upload-mr">पानाचा फोटो अपलोड करा</div>
         <div class="upload-en">Upload Leaf Photo for Disease Detection</div>
-    
+
     <!-- Gemini/ChatGPT सारखे मेनू उघडणारे १ मुख्य बटण -->
         <button type="button" class="attach-main-btn" onclick="toggleUploadMenu(event)" style="margin-top: 15px; padding: 10px 20px; border-radius: 25px; border: 1px solid #ccc; background: #ffffff; cursor: pointer; font-size: 15px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
          📎 फोटो जोडा
@@ -552,11 +552,11 @@ body{
 
     <!-- क्लिक केल्यावर उघडणारा Popup Menu -->
         <div id="upload-menu" class="upload-popup-menu" style="display: none; position: absolute; bottom: 65px; left: 50%; transform: translateX(-50%); background: #ffffff; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); padding: 8px; width: 180px; z-index: 100; border: 1px solid #eee;">
-      
+
            <div onclick="openSource('camera')" style="padding: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; border-bottom: 1px solid #f0f0f0; font-size: 14px; text-align: left; font-weight: 500; color: #333;">
              📷 कॅमेरा (Camera)
            </div>
-      
+
            <div onclick="openSource('gallery')" style="padding: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; text-align: left; font-weight: 500; color: #333;">
             🖼️ गॅलरी (Gallery)
            </div>
@@ -573,11 +573,12 @@ body{
   <!-- CHAT WINDOW -->
   <main class="chat-area">
     <div class="messages" id="messages">
-      <div class="date-divider">🌱 आजचे संभाषण • Today's Chat 🌱</div>
-      <div class="msg bot">
-        <div class="msg-avatar">🌾</div>
-        <div class="msg-content">
-          <div class="msg-bubble">नमस्कार शेतकरी मित्र! 🙏
+      <div id="welcome-screen">
+        <div class="date-divider">🌱 आजचे संभाषण • Today's Chat 🌱</div>
+        <div class="msg bot">
+          <div class="msg-avatar">🌾</div>
+          <div class="msg-content">
+            <div class="msg-bubble">नमस्कार शेतकरी मित्र! 🙏
 
 मी ShetkariMitra AI आहे — तुमचा आधुनिक शेती सहायक!
 
@@ -589,7 +590,8 @@ body{
 🌱 बियाणे, खते, फवारणी
 
 मराठी किंवा English मध्ये विचारा! 😊</div>
-          <div class="msg-time" id="welcome-time"></div>
+            <div class="msg-time" id="welcome-time"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -617,14 +619,59 @@ body{
   </div>
 </div>
 
+<!-- LOGIN / REGISTER POPUP MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="auth-card">
+    <button class="close-modal" onclick="closeAuthModal()">✕</button>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <div class="auth-title">लॉगिन करा 🌾</div>
+      <div class="auth-subtitle">तुमचे खाते वापरून पूर्ण लाभ घ्या.</div>
+      <input type="tel" id="loginMobile" class="auth-input" placeholder="मोबाईल नंबर">
+      <input type="password" id="loginPass" class="auth-input" placeholder="पासवर्ड">
+      <button class="btn-auth-submit" onclick="submitLogin()">लॉगिन करा</button>
+      <div class="auth-toggle-text">खाते नाही? <span onclick="switchForm('register')">नवीन खाते बनवा</span></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm" style="display:none;">
+      <div class="auth-title">नवीन खाते बनवा 🚜</div>
+      <div class="auth-subtitle">शेतकरी मित्र AI परिवारात स्वागत आहे.</div>
+      <input type="text" id="regName" class="auth-input" placeholder="पूर्ण नाव">
+      <input type="tel" id="regMobile" class="auth-input" placeholder="मोबाईल नंबर">
+      <input type="text" id="regDistrict" class="auth-input" placeholder="जिल्हा (उदा. अहमदनगर)">
+      <input type="password" id="regPass" class="auth-input" placeholder="पासवर्ड">
+      <button class="btn-auth-submit" onclick="submitRegister()">रजिस्टर करा</button>
+      <div class="auth-toggle-text">आधीच खाते आहे? <span onclick="switchForm('login')">लॉगिन करा</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ChatGPT Style History Drawer -->
+<div class="history-drawer" id="historyDrawer">
+  <div class="drawer-header">
+    <h3>📜 जुना इतिहास (History)</h3>
+    <button class="close-drawer" onclick="closeHistoryDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="historyListContainer">
+  <!-- यहाँ शॉर्ट नाम वाली लिस्ट लोड होगी -->
+  </div>
+</div>
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeHistoryDrawer()"></div>
+
 <script>
 const BACKEND_URL = window.location.hostname === 'localhost' || 
                     window.location.hostname === '127.0.0.1'
   ? 'http://localhost:5000'
   : 'https://shetkarimitra-ai.onrender.com';
 
+let currentSessionId = "sess_" + Date.now();
+
 function nowTime(){const d=new Date();return d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');}
-document.getElementById('welcome-time').textContent=nowTime();
+const welcomeTimeEl = document.getElementById('welcome-time');
+if(welcomeTimeEl) welcomeTimeEl.textContent = nowTime();
+
 const messagesEl=document.getElementById('messages');
 
 function toggleMenu(forceState) {
@@ -669,7 +716,12 @@ async function sendToBackend(question){
   try{
     const controller=new AbortController();
     const timeout=setTimeout(()=>controller.abort(),60000);
-    const res=await fetch(`${BACKEND_URL}/chat`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question}),signal:controller.signal});
+    const res=await fetch(`${BACKEND_URL}/chat`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({question, session_id: currentSessionId}),
+      signal:controller.signal
+    });
     clearTimeout(timeout);
     if(!res.ok)throw new Error('Server error');
     const data=await res.json();
@@ -691,10 +743,10 @@ async function handleSend(){
   if (welcomeScreen) {
     welcomeScreen.remove();
   }
-  
+
   isSending = true;
   addMessage(question,'user');inp.value='';inp.focus();showTyping();
-  
+
   try {
     const answer=await sendToBackend(question);
     removeTyping();
@@ -720,22 +772,20 @@ function quickAsk(q){
 
 function askCurrentWeather(){
   const cityName=document.getElementById('w-city-name').textContent.replace('📍 ','').trim();
-  if(cityName&&cityName!=='로드 होत आहे...'&&cityName!=='⚠️ ऑफलाइन')quickAsk(cityName+' weather');
+  if(cityName&&cityName!=='लोड होत आहे...'&&cityName!=='⚠️ ऑफलाइन')quickAsk(cityName+' weather');
   else quickAsk('weather');
 }
 
 function askRainQuestion(type){
   const cityName=document.getElementById('w-city-name').textContent.replace('📍 ','').trim();
-  const city=(cityName&&cityName!=='로드 होत आहे...'&&cityName!=='⚠️ ऑफलाइन')?cityName:'Poladpur';
+  const city=(cityName&&cityName!=='लोड होत आहे...'&&cityName!=='⚠️ ऑफलाइन')?cityName:'Poladpur';
   if(type==='udya')quickAsk(`udya paus padnar ka ${city} madhe`);
   else quickAsk(`aaj paus padnar aahe ka ${city} madhe`);
 }
 
-
 async function refreshWeather(){
   document.getElementById('w-city-name').textContent='📍 लोड होत आहे...';
-  
-  // Browser se location maango
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -745,7 +795,6 @@ async function refreshWeather(){
       },
       (error) => {
         console.log('Location error:', error);
-        // Permission nahi mili toh default city use karo
         fetchWeatherByCity('Poladpur');
       }
     );
@@ -783,11 +832,13 @@ async function fetchWeatherByCity(city) {
     document.getElementById('w-city-name').textContent = '⚠️ ऑफलाइन';
   }
 }
+
 function parseWeatherFromAnswer(text){
   const temp=text.match(/(\d+\.?\d*)°C/);const hum=text.match(/(\d+)%/);
   if(temp)document.getElementById('w-temp').textContent=temp[1];
   if(hum)document.getElementById('w-hum').textContent=hum[1]+'%';
 }
+
 if (navigator.onLine) {
   refreshWeather();
 } else {
@@ -842,46 +893,40 @@ function toggleVoice(){
   recognition.start();
 }
 
-// १. आवाज थांबवणारे आणि बटण लगेच लपवणारे फंक्शन
 function stopVoiceOutput() {
   if (window.speechSynthesis) {
-    window.speechSynthesis.cancel(); // आवाज थांबवा
+    window.speechSynthesis.cancel();
   }
   const stopBtn = document.getElementById('voice-stop-btn');
   if (stopBtn) {
-    stopBtn.style.setProperty('display', 'none', 'important'); // बटण तात्काळ लपवा
+    stopBtn.style.setProperty('display', 'none', 'important');
   }
 }
 
-// २. ऑडिओ प्ले करणारे सुधारित फंक्शन
 function speakAnswer(text){
   if(!window.speechSynthesis) return;
-  
-  // आधीचा काही आवाज चालू असेल तर बंद करा आणि बटण लपवा
+
   stopVoiceOutput();
-  
+
   const clean = cleanText(text);
   if (!clean) return;
 
   const utterance = new SpeechSynthesisUtterance(clean);
   const isMarathi = /[\u0900-\u097F]/.test(clean);
-  
+
   utterance.lang = isMarathi ? 'mr-IN' : 'en-IN';
   utterance.rate = 0.95;
-  
+
   const stopBtn = document.getElementById('voice-stop-btn');
 
-  // जेव्हा प्रत्यक्षात आवाज बोलायला सुरुवात होईल तेव्हाच बटण दाखवा
   utterance.onstart = function() {
     if(stopBtn) stopBtn.style.setProperty('display', 'flex', 'important');
   };
 
-  // आवाज पूर्ण बोलून संपल्यावर बटण लपवा
   utterance.onend = function() {
     if(stopBtn) stopBtn.style.setProperty('display', 'none', 'important');
   };
 
-  // काही त्रुटी आल्यास बटण लपवा
   utterance.onerror = function() {
     if(stopBtn) stopBtn.style.setProperty('display', 'none', 'important');
   };
@@ -889,7 +934,6 @@ function speakAnswer(text){
   setTimeout(() => window.speechSynthesis.speak(utterance), 100);
 }
 
-// PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./service-worker.js')
@@ -898,7 +942,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// १. साइडबारमधील कार्डसाठी पॉपअप मेनू (Sidebar Popup)
 function toggleUploadMenu(event) {
   if (event) {
     event.preventDefault();
@@ -910,7 +953,6 @@ function toggleUploadMenu(event) {
   }
 }
 
-// २. इनपुट बारमधील 📷 बटणासाठी पॉपअप मेनू (Input Bar Popup)
 function toggleInputUploadMenu(event) {
   if (event) {
     event.preventDefault();
@@ -922,16 +964,13 @@ function toggleInputUploadMenu(event) {
   }
 }
 
-// ३. कॅमेरा किंवा गॅलरी उघडणारे मुख्य फंक्शन
 function openSource(type) {
-  // १. दोन्ही ठिकाणचे पॉपअप मेनू बंद करणे
   const sidebarMenu = document.getElementById('upload-menu');
   const inputMenu = document.getElementById('input-upload-menu');
-  
+
   if (sidebarMenu) sidebarMenu.style.display = 'none';
   if (inputMenu) inputMenu.style.display = 'none';
 
-  // २. कॅमेरा किंवा गॅलरीचे Input Trigger करणे
   if (type === 'camera') {
     const camInput = document.getElementById('camera-input');
     if (camInput) camInput.click();
@@ -941,11 +980,10 @@ function openSource(type) {
   }
 }
 
-// ४. स्क्रीनवर बाहेर कुठेही क्लिक केल्यास दोन्ही मेनू बंद करणे
 document.addEventListener('click', function(e) {
   const sidebarMenu = document.getElementById('upload-menu');
   const inputMenu = document.getElementById('input-upload-menu');
-  
+
   if (sidebarMenu && !sidebarMenu.contains(e.target)) {
     sidebarMenu.style.display = 'none';
   }
@@ -953,6 +991,7 @@ document.addEventListener('click', function(e) {
     inputMenu.style.display = 'none';
   }
 });
+
 function toggleDropdown() {
   const menu = document.getElementById('dropdownMenu');
   if (menu) menu.classList.toggle('active');
@@ -968,7 +1007,7 @@ function closeAuthModal() {
     const modal = document.getElementById('authModal');
     if (modal) modal.classList.remove('active');
 }
-  
+
 function switchForm(type) {
   const loginForm = document.getElementById('loginForm');
   const regForm = document.getElementById('registerForm');
@@ -1032,6 +1071,9 @@ function updateUserUI(userName) {
   if (userName && navArea) {
     const firstLetter = userName.charAt(0).toUpperCase();
     navArea.innerHTML = `
+      <button class="btn-new-chat" onclick="startNewChat()">
+        <span>+</span> New Chat
+      </button>
       <div style="position: relative;" onclick="toggleDropdown()">
         <div class="profile-avatar">${firstLetter}</div>
         <span class="online-dot" style="position: absolute; bottom: 0; right: 0; border: 1.5px solid white;"></span>
@@ -1051,44 +1093,7 @@ async function logoutUser() {
 }
 
 async function loadHistory() {
-  try {
-    const res = await fetch(`${BACKEND_URL}/history`);
-    const data = await res.json();
-    if (res.ok && data.history.length > 0) {
-      const chatBox = document.getElementById('chatBox');
-      if (chatBox) chatBox.innerHTML = '';
-      data.history.forEach(item => {
-        if (typeof addMessage === 'function') {
-          addMessage(item.question, 'user');
-          addMessage(item.answer, 'bot');
-        }
-      });
-      toggleDropdown();
-    } else if (data.history.length === 0) {
-      alert('📜 तुमचा जुना कोणताही इतिहास नाही.');
-    } else {
-      alert(data.message || 'इतिहास लोड करता आला नाही.');
-    }
-  } catch (err) {
-    alert('इतिहास लोड करताना त्रुटी आली.');
-  }
-}
-
-window.addEventListener('DOMContentLoaded', async () => {
-  try {
-    const res = await fetch('/check-auth');
-    const data = await res.json();
-    if (data.logged_in) {
-      updateUserUI(data.user_name); // अगर पहले से लॉगिन है तो अवतार दिखेगा
-    }
-  } catch (e) {
-    console.log("Auth check error", e);
-  }
-});
-
-// इतिहास साइडबार खोलना
-async function loadHistory() {
-  toggleDropdown(); // ड्रॉपडाउन बंद करें
+  toggleDropdown();
   const drawer = document.getElementById('historyDrawer');
   const overlay = document.getElementById('drawerOverlay');
   const container = document.getElementById('historyListContainer');
@@ -1098,20 +1103,19 @@ async function loadHistory() {
   overlay.classList.add('active');
 
   try {
-    const res = await fetch('/history');
+    const res = await fetch(`${BACKEND_URL}/history`);
     const data = await res.json();
 
-    if (res.ok && data.history.length > 0) {
+    if (res.ok && data.history && data.history.length > 0) {
       container.innerHTML = '';
       data.history.forEach(item => {
         const card = document.createElement('div');
         card.className = 'history-item-card';
         card.innerHTML = `
-          <div class="history-item-title">💬 ${item.title}</div>
+          <div class="history-item-title">💬 ${item.title || item.question}</div>
           <div class="history-item-time">🕒 ${item.time || ''}</div>
         `;
-        // कार्ड पर क्लिक करने पर सिर्फ वही बातचीत स्क्रीन पर दिखेगी
-        card.onclick = () => showSpecificChat(item.full_question, item.answer);
+        card.onclick = () => showSpecificChat(item.full_question || item.question, item.answer);
         container.appendChild(card);
       });
     } else {
@@ -1127,25 +1131,18 @@ function closeHistoryDrawer() {
   document.getElementById('drawerOverlay').classList.remove('active');
 }
 
-// चुनी हुई बातचीत को मुख्य चैट स्क्रीन पर दिखाना
 function showSpecificChat(question, answer) {
   closeHistoryDrawer();
-  const chatBox = document.getElementById('chatBox');
-  if (chatBox) {
-    chatBox.innerHTML = ''; // स्क्रीन साफ करें
-    if (typeof addMessage === 'function') {
-      addMessage(question, 'user');
-      addMessage(answer, 'bot');
-    }
+  if (messagesEl) {
+    messagesEl.innerHTML = '';
+    addMessage(question, 'user');
+    addMessage(answer, 'bot');
   }
 }
 
 function startNewChat() {
-  // 1. नया Session ID जनरेट करें
   currentSessionId = "sess_" + Date.now();
 
-  // 2. स्क्रीन पर Welcome UI वापस लाएँ
-  const messagesEl = document.getElementById('messages');
   if (messagesEl) {
     messagesEl.innerHTML = `
       <div id="welcome-screen">
@@ -1161,7 +1158,6 @@ function startNewChat() {
     `;
   }
 
-  // 3. Input Box खाली करें
   const inp = document.getElementById('inp');
   if (inp) {
     inp.value = '';
@@ -1171,47 +1167,18 @@ function startNewChat() {
   toggleMenu(false);
   closeHistoryDrawer();
 }  
-    
+
+window.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch(`${BACKEND_URL}/check-auth`);
+    const data = await res.json();
+    if (data.logged_in) {
+      updateUserUI(data.user_name);
+    }
+  } catch (e) {
+    console.log("Auth check error", e);
+  }
+});
 </script>
-  <!-- LOGIN / REGISTER POPUP MODAL -->
-  <div class="modal-overlay" id="authModal">
-    <div class="auth-card">
-      <button class="close-modal" onclick="closeAuthModal()">✕</button>
-      
-      <!-- LOGIN FORM -->
-      <div id="loginForm">
-        <div class="auth-title">लॉगिन करा 🌾</div>
-        <div class="auth-subtitle">तुमचे खाते वापरून पूर्ण लाभ घ्या.</div>
-        <input type="tel" id="loginMobile" class="auth-input" placeholder="मोबाईल नंबर">
-        <input type="password" id="loginPass" class="auth-input" placeholder="पासवर्ड">
-        <button class="btn-auth-submit" onclick="submitLogin()">लॉगिन करा</button>
-        <div class="auth-toggle-text">खाते नाही? <span onclick="switchForm('register')">नवीन खाते बनवा</span></div>
-      </div>
-
-      <!-- REGISTER FORM -->
-      <div id="registerForm" style="display:none;">
-        <div class="auth-title">नवीन खाते बनवा 🚜</div>
-        <div class="auth-subtitle">शेतकरी मित्र AI परिवारात स्वागत आहे.</div>
-        <input type="text" id="regName" class="auth-input" placeholder="पूर्ण नाव">
-        <input type="tel" id="regMobile" class="auth-input" placeholder="मोबाईल नंबर">
-        <input type="text" id="regDistrict" class="auth-input" placeholder="जिल्हा (उदा. अहमदनगर)">
-        <input type="password" id="regPass" class="auth-input" placeholder="पासवर्ड">
-        <button class="btn-auth-submit" onclick="submitRegister()">रजिस्टर करा</button>
-        <div class="auth-toggle-text">आधीच खाते आहे? <span onclick="switchForm('login')">लॉगिन करा</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ChatGPT Style History Drawer -->
-  <div class="history-drawer" id="historyDrawer">
-    <div class="drawer-header">
-      <h3>📜 जुना इतिहास (History)</h3>
-      <button class="close-drawer" onclick="closeHistoryDrawer()">✕</button>
-    </div>
-    <div class="drawer-body" id="historyListContainer">
-    <!-- यहाँ शॉर्ट नाम वाली लिस्ट लोड होगी -->
-    </div>
-  </div>
-  <div class="drawer-overlay" id="drawerOverlay" onclick="closeHistoryDrawer()"></div>
 </body>
 </html>
