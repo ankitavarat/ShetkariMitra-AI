@@ -429,6 +429,33 @@ body{
   background: rgba(0,0,0,0.4); z-index: 1000;
 }
 .drawer-overlay.active { display: block; }
+
+.btn-new-chat {
+  background: linear-gradient(135deg, var(--mint), var(--mint-deep));
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 18px;
+  border: none;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transition: all 0.2s ease;
+  margin-right: 8px;
+}
+
+.btn-new-chat:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+}
+
+.btn-new-chat span {
+  font-size: 16px;
+  font-weight: 800;
+} 
 </style>
 </head>
 <body>
@@ -446,6 +473,9 @@ body{
     </div>
 
     <div class="user-nav-area" id="userNavArea">
+      <button class="btn-new-chat" onclick="startNewChat()">
+        <span>+</span> New Chat
+       </button>
       <button class="btn-login-nav" onclick="openAuthModal('login')">लॉगिन</button>
     </div>
   </header>
@@ -656,6 +686,11 @@ async function handleSend(){
   const inp=document.getElementById('inp');
   const question=inp.value.trim();
   if(!question) return;
+
+  const welcomeScreen = document.getElementById('welcome-screen');
+  if (welcomeScreen) {
+    welcomeScreen.remove();
+  }
   
   isSending = true;
   addMessage(question,'user');inp.value='';inp.focus();showTyping();
@@ -675,7 +710,13 @@ async function handleSend(){
 }
 
 function handleKey(e){if(e.key==='Enter'){e.preventDefault();e.stopPropagation();handleSend();}}
-function quickAsk(q){document.getElementById('inp').value=q;handleSend();}
+function quickAsk(q){
+  const welcomeScreen = document.getElementById('welcome-screen');
+  if (welcomeScreen) {
+    welcomeScreen.remove();
+  }
+  document.getElementById('inp').value=q;handleSend();
+}
 
 function askCurrentWeather(){
   const cityName=document.getElementById('w-city-name').textContent.replace('📍 ','').trim();
@@ -1097,6 +1138,38 @@ function showSpecificChat(question, answer) {
       addMessage(answer, 'bot');
     }
   }
+}
+
+function startNewChat() {
+  // 1. नया Session ID जनरेट करें
+  currentSessionId = "sess_" + Date.now();
+
+  // 2. स्क्रीन पर Welcome UI वापस लाएँ
+  const messagesEl = document.getElementById('messages');
+  if (messagesEl) {
+    messagesEl.innerHTML = `
+      <div id="welcome-screen">
+        <div class="date-divider">🌱 नवीन संभाषण • New Chat 🌱</div>
+        <div class="msg bot">
+          <div class="msg-avatar">🌾</div>
+          <div class="msg-content">
+            <div class="msg-bubble">नमस्कार शेतकरी मित्र! 🙏<br><br>मी ShetkariMitra AI आहे — तुमचा आधुनिक शेती सहायक!<br><br>मराठी किंवा English मध्ये विचारा! 😊</div>
+            <div class="msg-time">${nowTime()}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 3. Input Box खाली करें
+  const inp = document.getElementById('inp');
+  if (inp) {
+    inp.value = '';
+    inp.focus();
+  }
+
+  toggleMenu(false);
+  closeHistoryDrawer();
 }  
     
 </script>
