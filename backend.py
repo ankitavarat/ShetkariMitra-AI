@@ -848,6 +848,18 @@ def detect_disease(filepath, language):
                 "💡 Take photo in natural light for better results."
             )
 
+CITY_MAP = {
+    "जामखेड": "Jamkhed",
+    "पुणे": "Pune",
+    "अहमदनगर": "Ahmednagar",
+    "नगर": "Ahmednagar",
+    "मुंबई": "Mumbai",
+    "नाशिक": "Nashik",
+    "औरंगाबाद": "Aurangabad",
+    "कोल्हापूर": "Kolhapur",
+    "सोलापूर": "Solapur",
+}
+
 def extract_city_from_question(question):
     skip_words = [
         "weather", "havaman", "हवामान", "आजचे", "आजचं",
@@ -864,6 +876,8 @@ def extract_city_from_question(question):
         if clean_word.lower() in skip_words:
             continue
         if any('\u0900' <= c <= '\u097F' for c in clean_word):
+            if clean_word in CITY_MAP:
+                return CITY_MAP[clean_word]
             if clean_word in ["हवामान","पाऊस","उद्या","आजचे","मध्ये","आहे","का","सांगा","पडणार"]:
                 continue
             try:
@@ -942,6 +956,9 @@ def chatbot_response(question):
      words = question.split()
 
      city = extract_city_from_question(question)
+     print("Question :", question)
+     print("Detected City :", city)   
+        
 
      for word in words:
 
@@ -987,6 +1004,8 @@ def chatbot_response(question):
         words = question.split()
 
         city = extract_city_from_question(question)
+        print("Question :", question)
+        print("Detected City :", city)
 
         for word in words:
 
