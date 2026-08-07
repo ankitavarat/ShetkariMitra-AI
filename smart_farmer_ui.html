@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="mr">
 <head>
 <meta charset="UTF-8"/>
@@ -212,6 +212,9 @@ body{
   }
   .menu-toggle {
     display: block;
+    padding: 4px 8px !important; 
+    font-size: 11px !important; 
+    height: 32px;
   }
 
   .sidebar {
@@ -249,8 +252,8 @@ body{
   .msg { max-width: 88%; }
   .msg-bubble { font-size: 14.5px; padding: 12px 15px; }
 
-  .header { padding: 0 16px; }
-  .header-text h1 { font-size: 18px; }
+  .header { padding: 0 8px !important; gap: 4px !important; }
+  .header-text h1 { font-size: 14px !important; }
   .header-text p { display: none; }
 
   /* मोबाईलवर 'ऑनलाइन' वर्ड व्यवस्थित करण्यासाठी */
@@ -271,6 +274,9 @@ body{
   .btn-voice { width: 42px!important; height: 42px!important; font-size: 18px!important; }
   .btn-send { width: 40px!important; height: 40px!important; font-size: 16px!important; }
   .btn-stop { width: 40px!important; height: 40px!important; font-size: 14px!important; }
+
+  .user-nav-area { gap: 4px !important; flex-shrink: 0; }
+  .btn-new-chat, .btn-login-nav { padding: 4px 8px !important; font-size: 10px !important; height: 32px; }
 }
 
 .bottom-nav { display: none !important; }
