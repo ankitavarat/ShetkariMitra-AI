@@ -211,10 +211,13 @@ body{
     grid-template-rows:72px 1fr auto;
   }
   .menu-toggle {
-    display: block;
-    padding: 4px 8px !important; 
-    font-size: 11px !important; 
-    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    height: 34px;
+    flex-shrink: 0;
   }
 
   .sidebar {
@@ -252,8 +255,8 @@ body{
   .msg { max-width: 88%; }
   .msg-bubble { font-size: 14.5px; padding: 12px 15px; }
 
-  .header { padding: 0 8px !important; gap: 4px !important; }
-  .header-text h1 { font-size: 14px !important; }
+  .header { padding: 0 12px !important; gap: 8px !important; }
+  .header-text h1 { font-size: 15px !important; }
   .header-text p { display: none; }
 
   /* मोबाईलवर 'ऑनलाइन' वर्ड व्यवस्थित करण्यासाठी */
@@ -275,8 +278,8 @@ body{
   .btn-send { width: 40px!important; height: 40px!important; font-size: 16px!important; }
   .btn-stop { width: 40px!important; height: 40px!important; font-size: 14px!important; }
 
-  .user-nav-area { gap: 4px !important; flex-shrink: 0; }
-  .btn-new-chat, .btn-login-nav { padding: 4px 8px !important; font-size: 10px !important; height: 32px; }
+  .user-nav-area { gap: 6px !important; flex-shrink: 0; }
+  .btn-new-chat, .btn-login-nav { padding: 6px 12px !important; font-size: 11px !important; height: 34px; }
 }
 
 .bottom-nav { display: none !important; }
@@ -461,7 +464,15 @@ body{
 .btn-new-chat span {
   font-size: 15px;
   font-weight: 800;
-} 
+}
+ /* Sidebar New Chat Button CSS */
+.sidebar .btn-new-chat {
+  width: 100% !important;
+  justify-content: center !important;
+  margin-right: 0 !important;
+  padding: 10px !important;
+  font-size: 13px !important;
+}
 </style>
 </head>
 <body>
@@ -482,15 +493,17 @@ body{
   </div>
 
     <div class="user-nav-area" id="userNavArea">
-      <button class="btn-new-chat" onclick="startNewChat()">
-        <span>+</span> New Chat
-       </button>
       <button class="btn-login-nav" onclick="openAuthModal('login')">लॉगिन</button>
     </div>
   </header>
 
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
+    <div style="padding: 15px 15px 5px 15px;">
+       <button class="btn-new-chat" onclick="startNewChat(); toggleMenu(false);" style="width: 100%; justify-content: center; padding: 10px; font-size: 14px; margin-right: 0;">
+          <span>+</span> New Chat
+        </button>
+     </div>
     <div class="weather-card">
       <div class="weather-top">
         <div class="weather-label">🌤 लाईव्ह हवामान</div>
