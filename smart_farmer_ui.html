@@ -795,54 +795,32 @@ function quickAsk(q){
 
 function askCurrentWeather(){
   const cityName=document.getElementById('w-city-name').textContent.replace('📍 ','').trim();
-  if(cityName&&cityName!=='लोड होत आहे...'&&cityName!=='⚠️ ऑफलाइन')quickAsk(cityName+' weather');
+  if(cityName&&cityName!=='로드 होत आहे...'&&cityName!=='⚠️ ऑफलाइन')quickAsk(cityName+' weather');
   else quickAsk('weather');
 }
 
 function askRainQuestion(type){
   const cityName=document.getElementById('w-city-name').textContent.replace('📍 ','').trim();
-  const city=(cityName&&cityName!=='लोड होत आहे...'&&cityName!=='⚠️ ऑफलाइन')?cityName:'Poladpur';
+  const city=(cityName&&cityName!=='로드 होत आहे...'&&cityName!=='⚠️ ऑफलाइन')?cityName:'Poladpur';
   if(type==='udya')quickAsk(`udya paus padnar ka ${city} madhe`);
   else quickAsk(`aaj paus padnar aahe ka ${city} madhe`);
 }
 
-/* 🌾 REFRESH WEATHER - ACCURATE VILLAGE FIX */
+
 async function refreshWeather(){
   document.getElementById('w-city-name').textContent='📍 लोड होत आहे...';
-
+  
+  // Browser se location maango
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-
-        let villageName = null;
-        try {
-          // 💡 zoom=18 जोडल्यामुळे अतिशय सूक्ष्म (गावाच्या पातळीवर) डेटा मिळतो
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=18&addressdetails=1`);
-          const geoData = await res.json();
-          
-          if (geoData && geoData.address) {
-            const addr = geoData.address;
-            
-            // 🎯 प्रायॉरिटीनुसार गावाचे नाव शोधणे (सर्वात आधी गाव/वस्ती/हॅम्लेट)
-            villageName = addr.village || 
-                          addr.hamlet || 
-                          addr.suburb || 
-                          addr.neighbourhood || 
-                          addr.town || 
-                          addr.subdistrict || 
-                          addr.county || null;
-          }
-        } catch (err) {
-          console.log('Village fetch error:', err);
-        }
-
-        // हवामान फेच करताना गावाचे नाव पाठवणे
-        await fetchWeatherByCoords(lat, lon, villageName);
+        await fetchWeatherByCoords(lat, lon);
       },
       (error) => {
         console.log('Location error:', error);
+        // Permission nahi mili toh default city use karo
         fetchWeatherByCity('Poladpur');
       }
     );
@@ -851,8 +829,7 @@ async function refreshWeather(){
   }
 }
 
-/* 🌤️ २. FETCH WEATHER BY COORDS - CUSTOM VILLAGE NAME SUPPORT */
-async function fetchWeatherByCoords(lat, lon, customVillageName = null) {
+async function fetchWeatherByCoords(lat, lon) {
   try {
     const res = await fetch(`${BACKEND_URL}/weather-coords?lat=${lat}&lon=${lon}`);
     const data = await res.json();
@@ -860,10 +837,7 @@ async function fetchWeatherByCoords(lat, lon, customVillageName = null) {
       document.getElementById('w-temp').textContent = data.temp;
       document.getElementById('w-hum').textContent = data.humidity + '%';
       document.getElementById('w-cond').textContent = data.weather;
-      
-      // जर गावाचे अचूक नाव सापडले असेल तर ते वापरा, नाहीतर Backend/OpenWeather मधील नाव दाखवा
-      const finalCity = customVillageName || data.city;
-      document.getElementById('w-city-name').textContent = '📍 ' + finalCity;
+      document.getElementById('w-city-name').textContent = '📍 ' + data.city;
     }
   } catch {
     document.getElementById('w-city-name').textContent = '⚠️ ऑफलाइन';
@@ -884,18 +858,17 @@ async function fetchWeatherByCity(city) {
     document.getElementById('w-city-name').textContent = '⚠️ ऑफलाइन';
   }
 }
-
 function parseWeatherFromAnswer(text){
   const temp=text.match(/(\d+\.?\d*)°C/);const hum=text.match(/(\d+)%/);
   if(temp)document.getElementById('w-temp').textContent=temp[1];
   if(hum)document.getElementById('w-hum').textContent=hum[1]+'%';
 }
-
 if (navigator.onLine) {
   refreshWeather();
 } else {
   document.getElementById('w-city-name').textContent = '⚠️ ऑफलाईन मोड';
 }
+
 setInterval(() => {
   if (navigator.onLine) {
     refreshWeather();
