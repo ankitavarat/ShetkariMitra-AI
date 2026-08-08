@@ -986,31 +986,6 @@ def chatbot_response(question):
         print("Question :", question)
         print("Detected City :", city)
 
-        for word in words:
-
-            if word not in [
-
-                "weather",
-                "havaman",
-                "हवामान",
-
-                "tomato",
-                "टोमॅटो",
-
-                "onion",
-                "कांदा",
-                "kanda",
-
-                "cotton",
-                "कापूस",
-                "kapus"
-
-            ]:
-
-                city = word
-
-                break
-
         weather_data = get_weather(city, language)
 
         if weather_data is None:
