@@ -806,6 +806,7 @@ function askRainQuestion(type){
   else quickAsk(`aaj paus padnar aahe ka ${city} madhe`);
 }
 
+/* 🌾 १. REFRESH WEATHER - NOMINATIM API INTEGRATED */
 async function refreshWeather(){
   document.getElementById('w-city-name').textContent='📍 लोड होत आहे...';
 
@@ -814,7 +815,24 @@ async function refreshWeather(){
       async (position) => {
         const lat = position.coords.latitude;
         const lon = position.coords.longitude;
-        await fetchWeatherByCoords(lat, lon);
+
+        // गावाचे नाव शोधण्यासाठी Nominatim API Call
+        let villageName = null;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+          const geoData = await res.json();
+          if (geoData && geoData.address) {
+            villageName = geoData.address.village || 
+                          geoData.address.suburb || 
+                          geoData.address.town || 
+                          geoData.address.county || null;
+          }
+        } catch (err) {
+          console.log('Village fetch error:', err);
+        }
+
+        // हवामान फेच करताना गावाचे नाव पास करा
+        await fetchWeatherByCoords(lat, lon, villageName);
       },
       (error) => {
         console.log('Location error:', error);
@@ -826,7 +844,8 @@ async function refreshWeather(){
   }
 }
 
-async function fetchWeatherByCoords(lat, lon) {
+/* 🌤️ २. FETCH WEATHER BY COORDS - CUSTOM VILLAGE NAME SUPPORT */
+async function fetchWeatherByCoords(lat, lon, customVillageName = null) {
   try {
     const res = await fetch(`${BACKEND_URL}/weather-coords?lat=${lat}&lon=${lon}`);
     const data = await res.json();
@@ -834,7 +853,10 @@ async function fetchWeatherByCoords(lat, lon) {
       document.getElementById('w-temp').textContent = data.temp;
       document.getElementById('w-hum').textContent = data.humidity + '%';
       document.getElementById('w-cond').textContent = data.weather;
-      document.getElementById('w-city-name').textContent = '📍 ' + data.city;
+      
+      // जर गावाचे अचूक नाव सापडले असेल तर ते वापरा, नाहीतर Backend/OpenWeather मधील नाव दाखवा
+      const finalCity = customVillageName || data.city;
+      document.getElementById('w-city-name').textContent = '📍 ' + finalCity;
     }
   } catch {
     document.getElementById('w-city-name').textContent = '⚠️ ऑफलाइन';
@@ -867,7 +889,6 @@ if (navigator.onLine) {
 } else {
   document.getElementById('w-city-name').textContent = '⚠️ ऑफलाईन मोड';
 }
-
 setInterval(() => {
   if (navigator.onLine) {
     refreshWeather();
