@@ -1200,6 +1200,25 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log("Auth check error", e);
   }
 });
+
+// हिस्ट्रीमधील पॉईंटवर क्लिक केल्यावर सर्व प्रश्न-उत्तरे लोड करणे
+function loadFullSessionChat(sessionId) {
+    fetch(`/get-session-chat/${sessionId}`)
+    .then(res => res.json())
+    .then(data => {
+        if(data.messages) {
+            const chatBox = document.getElementById("chatBox"); // तुमच्या चॅट बॉक्सचा ID
+            chatBox.innerHTML = ""; // स्क्रीन जुनी क्लिअर करा
+            
+            // त्या सेशनमधील सर्व प्रश्न आणि उत्तरे स्क्रीनवर दाखवा
+            data.messages.forEach(msg => {
+                appendUserMessage(msg.question); // युजरचा प्रश्न दाखवा
+                appendBotMessage(msg.answer);   // बॉटचे उत्तर दाखवा
+            });
+        }
+    })
+    .catch(err => console.error("Error loading chat:", err));
+} 
 </script>
 </body>
 </html>
