@@ -131,13 +131,14 @@ def history():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 🔹 एका session_id चा एकच इतिहास पॉईंट बनवला जाईल
+    # 🔹 प्रत्येक session_id साठी सर्व प्रश्नांचा डेटा आणणे
     cursor.execute(
         """
             SELECT 
                 session_id,
                 (ARRAY_AGG(question ORDER BY id ASC))[1] as first_question,
-                MIN(timestamp) as session_time
+                MIN(timestamp) as session_time,
+                COUNT(id) as message_count
             FROM chat_history
             WHERE mobile = %s
             GROUP BY session_id
@@ -153,10 +154,15 @@ def history():
     history_list = []
     for row in rows:
       first_q = row[1]
-      short_title = first_q[:25] + "..." if len(first_q) > 25 else first_q
+      msg_count = row[3]
+
+      # ५ पेक्षा जास्त प्रश्न असल्यास टायटलमध्ये दाखवेल
+      short_title = first_q[:30] + "..." if len(first_q) > 30 else first_q
+      if msg_count > 1:
+        short_title += f" ({msg_count} मेसेजेस)"
 
       history_list.append({
-          "id": row[0],  # session_id पाठवला जातोय
+          "session_id": row[0],  # session_id पाठवला जातोय
           "title": short_title,
           "question": first_q,
           "time": str(row[2]),
@@ -167,6 +173,40 @@ def history():
     print("History Fetch Error:", e)
     return jsonify({"message": "History दाखवण्यात अडचण आली.", "history": []}), 500
 
+
+# 🔹 एका सेशनमधील सर्व प्रश्न-उत्तरे मिळवण्यासाठी नवीन राऊट
+@app.route("/get-session-chat/<session_id>", methods=["GET"])
+def get_session_chat(session_id):
+  user_mobile = session.get("user_mobile")
+  if not user_mobile:
+    return jsonify({"message": "Unauthorized"}), 401
+
+  try:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+            SELECT question, answer, timestamp 
+            FROM chat_history 
+            WHERE mobile = %s AND session_id = %s 
+            ORDER BY id ASC;
+        """,
+        (user_mobile, session_id),
+    )
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    messages = []
+    for row in rows:
+      messages.append(
+          {"question": row[0], "answer": row[1], "time": str(row[2])}
+      )
+
+    return jsonify({"messages": messages}), 200
+  except Exception as e:
+    print("Session Chat Error:", e)
+    return jsonify({"message": "Error fetching chat"}), 500
 
 # -------------------- AUTH & OTHER ROUTES --------------------
 
