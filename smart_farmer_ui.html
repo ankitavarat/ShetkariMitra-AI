@@ -1095,9 +1095,6 @@ function updateUserUI(userName) {
   if (userName && navArea) {
     const firstLetter = userName.charAt(0).toUpperCase();
     navArea.innerHTML = `
-      <button class="btn-new-chat" onclick="startNewChat()">
-        <span>+</span> New Chat
-      </button>
       <div style="position: relative;" onclick="toggleDropdown()">
         <div class="profile-avatar">${firstLetter}</div>
         <span class="online-dot" style="position: absolute; bottom: 0; right: 0; border: 1.5px solid white;"></span>
