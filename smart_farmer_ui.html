@@ -1136,7 +1136,14 @@ async function loadHistory() {
           <div class="history-item-title">💬 ${item.title || item.question}</div>
           <div class="history-item-time">🕒 ${item.time || ''}</div>
         `;
-        card.onclick = () => showSpecificChat(item.full_question || item.question, item.answer);
+        
+        // 🔹 जुन्या showSpecificChat ऐवजी नवीन loadFullSessionChat वापरला आहे
+        card.onclick = () => {
+          loadFullSessionChat(item.id);
+          drawer.classList.remove('active');
+          overlay.classList.remove('active');
+        };
+        
         container.appendChild(card);
       });
     } else {
@@ -1144,6 +1151,35 @@ async function loadHistory() {
     }
   } catch (err) {
     container.innerHTML = '<div style="padding:15px; text-align:center; color:red;">त्रुटी आली.</div>';
+  }
+}
+
+// 🔹 त्या सेशनमधील सर्व प्रश्न आणि उत्तरे चॅट स्क्रीनवर दाखवणारे नवीन फंक्शन
+async function loadFullSessionChat(sessionId) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/get-session-chat/${sessionId}`);
+    const data = await res.json();
+
+    if (res.ok && data.messages && data.messages.length > 0) {
+      // जुन्या showSpecificChat च्या जागी पूर्ण चॅट दाखवण्यासाठी:
+      const chatBox = document.getElementById('chatBox') || document.getElementById('chatMessages'); 
+      if (chatBox) {
+        chatBox.innerHTML = ''; // स्क्रीनवरील जुने मेसेजेस क्लिअर करा
+
+        // त्या सेशनमधील प्रत्येक प्रश्न आणि उत्तर स्क्रीनवर दाखवा
+        data.messages.forEach(msg => {
+          if (typeof appendUserMessage === "function" && typeof appendBotMessage === "function") {
+            appendUserMessage(msg.question);
+            appendBotMessage(msg.answer);
+          } else {
+            // जर साधे showSpecificChat वापरायचे नसेल तर:
+            showSpecificChat(msg.question, msg.answer);
+          }
+        });
+      }
+    }
+  } catch (err) {
+    console.error("Session Chat Error:", err);
   }
 }
 
@@ -1201,24 +1237,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// हिस्ट्रीमधील पॉईंटवर क्लिक केल्यावर सर्व प्रश्न-उत्तरे लोड करणे
-function loadFullSessionChat(sessionId) {
-    fetch(`/get-session-chat/${sessionId}`)
-    .then(res => res.json())
-    .then(data => {
-        if(data.messages) {
-            const chatBox = document.getElementById("chatBox"); // तुमच्या चॅट बॉक्सचा ID
-            chatBox.innerHTML = ""; // स्क्रीन जुनी क्लिअर करा
-            
-            // त्या सेशनमधील सर्व प्रश्न आणि उत्तरे स्क्रीनवर दाखवा
-            data.messages.forEach(msg => {
-                appendUserMessage(msg.question); // युजरचा प्रश्न दाखवा
-                appendBotMessage(msg.answer);   // बॉटचे उत्तर दाखवा
-            });
-        }
-    })
-    .catch(err => console.error("Error loading chat:", err));
-} 
+
 </script>
 </body>
 </html>
