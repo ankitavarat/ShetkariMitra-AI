@@ -1208,8 +1208,11 @@ def chatbot_response(question):
             3. Give specific quantities and timings
             4. Sound like trusted expert friend
             5. Plain text only — no markdown, no HTML
-            6. Maximum 5 points
-            7. Each point practical and specific"""
+            6. Give as many points as needed to fully answer the question
+            7. Simple questions: 2-3 points
+            8. Complex questions (like planting, disease): 6-8 points
+            9. Each point must be practical and specific
+            10. Never cut short important farming advice"""
             
             },
             {
@@ -1218,7 +1221,7 @@ def chatbot_response(question):
            }
           ],
           temperature=0.7,
-          max_tokens=350,
+          max_tokens=500,
           timeout=10
         )
 
