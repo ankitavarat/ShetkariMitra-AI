@@ -1119,7 +1119,7 @@ window.addEventListener('DOMContentLoaded', () => {
     .catch(err => console.error("New session error:", err));
 });
 
-// 2. History लिस्ट लोड करणे
+// २. History लिस्ट लोड करणे
 async function loadHistory() {
   toggleDropdown();
   const drawer = document.getElementById('historyDrawer');
@@ -1141,16 +1141,15 @@ async function loadHistory() {
         card.className = 'history-item-card';
         card.innerHTML = `
           <div class="history-item-title">💬 ${item.title}</div>
-          <div class="history-item-time">🕒 ${item.time || ''} (${item.count} मेसेज)</div>
+          <div class="history-item-time">🕒 ${item.time || ''} (${item.count || 0} मेसेज)</div>
         `;
-        
-        // 🔹 कार्डवर क्लिक केल्यावर त्या सेशनचे सर्व मेसेजेस दाखवणे
+
+        // कार्डवर क्लिक केल्यावर त्या सेशनचे सर्व मेसेजेस चॅट स्क्रीनवर लोड होतील
         card.onclick = () => {
           loadFullSessionChat(item.session_id);
-          drawer.classList.remove('active');
-          overlay.classList.remove('active');
+          closeHistoryDrawer();
         };
-        
+
         container.appendChild(card);
       });
     } else {
@@ -1158,34 +1157,28 @@ async function loadHistory() {
     }
   } catch (err) {
     console.error("History error:", err);
-    container.innerHTML = '<div style="padding:15px; text-align:center; color:red;">त्रुटी आली.</div>';
+    container.innerHTML = '<div style="padding:15px; text-align:center; color:red;">त्रुटी आली. सर्व्हर तपासा.</div>';
   }
 }
 
-// 3. हिस्ट्रीच्या पॉईंटवर टच केल्यावर पूर्ण चॅट लोड करणे
+// 3. हिस्ट्रीच्या पॉईंटवर टच केल्यावर पूर्ण चॅट लोड करणे (FIXED)
 async function loadFullSessionChat(sessionId) {
   try {
+    currentSessionId = sessionId; // सेशन आयडी अपडेट करा
     const res = await fetch(`${BACKEND_URL}/get-session-chat/${sessionId}`);
     const data = await res.json();
 
     if (res.ok && data.messages && data.messages.length > 0) {
-      // 🔹 तुमच्या प्रोजेक्टमधील चॅट बॉक्सचा Container ID (उदा. chatBox किंवा chatMessages)
-      const chatBox = document.getElementById('chatBox') || document.getElementById('chatMessages');
-      
-      if (chatBox) {
-        chatBox.innerHTML = ''; // जुनी स्क्रीन साफ करा
+      if (messagesEl) {
+        messagesEl.innerHTML = ''; // जुनी स्क्रीन साफ करा
 
         // त्या सेशनमधील प्रत्येक प्रश्न आणि उत्तर स्क्रीनवर दाखवा
         data.messages.forEach(msg => {
-          if (typeof appendUserMessage === "function" && typeof appendBotMessage === "function") {
-            appendUserMessage(msg.question);
-            appendBotMessage(msg.answer);
-          } else if (typeof showSpecificChat === "function") {
-            showSpecificChat(msg.question, msg.answer);
-          }
+          if (msg.question) addMessage(msg.question, 'user');
+          if (msg.answer) addMessage(msg.answer, 'bot');
         });
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+        messagesEl.scrollTop = messagesEl.scrollHeight;
       }
     }
   } catch (err) {
@@ -1206,8 +1199,14 @@ function showSpecificChat(question, answer) {
   }
 }
 
-function startNewChat() {
+async function startNewChat() {
   currentSessionId = "sess_" + Date.now();
+
+  try {
+    await fetch(`${BACKEND_URL}/new-session`, { method: 'POST' });
+  } catch(e) {
+    console.log("New session notification failed", e);
+  }
 
   if (messagesEl) {
     messagesEl.innerHTML = `
@@ -1232,8 +1231,7 @@ function startNewChat() {
 
   toggleMenu(false);
   closeHistoryDrawer();
-}  
-
+}
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     const res = await fetch(`${BACKEND_URL}/check-auth`);
