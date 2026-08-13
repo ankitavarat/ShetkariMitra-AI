@@ -742,6 +742,7 @@ async function sendToBackend(question){
     const res=await fetch(`${BACKEND_URL}/chat`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
+      credentials: 'include',
       body:JSON.stringify({question, session_id: currentSessionId}),
       signal:controller.signal
     });
@@ -1164,25 +1165,57 @@ async function loadHistory() {
 // 3. हिस्ट्रीच्या पॉईंटवर टच केल्यावर पूर्ण चॅट लोड करणे (FIXED)
 async function loadFullSessionChat(sessionId) {
   try {
-    currentSessionId = sessionId; // सेशन आयडी अपडेट करा
-    const res = await fetch(`${BACKEND_URL}/get-session-chat/${sessionId}`);
+    currentSessionId = sessionId; // 🔹 Global Session ID सेट करा
+
+    showTyping(); // लोड होत असताना इंडिकेटर दाखवा
+
+    const res = await fetch(`${BACKEND_URL}/get-session-chat/${sessionId}`, {
+      credentials: 'include' // 👈 Session Cookie साठी अत्यंत महत्त्वाचे
+    });
     const data = await res.json();
 
-    if (res.ok && data.messages && data.messages.length > 0) {
-      if (messagesEl) {
-        messagesEl.innerHTML = ''; // जुनी स्क्रीन साफ करा
+    removeTyping();
 
-        // त्या सेशनमधील प्रत्येक प्रश्न आणि उत्तर स्क्रीनवर दाखवा
-        data.messages.forEach(msg => {
-          if (msg.question) addMessage(msg.question, 'user');
-          if (msg.answer) addMessage(msg.answer, 'bot');
+    // 🔹 बॅकएंड कडून आलेला मेसेज डेटा मिळवा
+    const chatMessages = data.messages || data.chat || (Array.isArray(data) ? data : []);
+
+    if (res.ok && Array.isArray(chatMessages) && chatMessages.length > 0) {
+      if (messagesEl) {
+        messagesEl.innerHTML = ''; // 🔹 जुनी स्क्रीन पूर्ण साफ करा
+
+        chatMessages.forEach(msg => {
+          // फॉरमॅट १: Flask DB चा प्रकार (एकाच ऑब्जेक्टमध्ये प्रश्न व उत्तर)
+          if (msg.question && msg.answer) {
+            addMessage(msg.question, 'user');
+            addMessage(msg.answer, 'bot');
+          } 
+          // फॉरमॅट २: रोल/सेंटर आधारित (Role / Sender Based)
+          else if (msg.role === 'user' || msg.sender === 'user') {
+            addMessage(msg.question || msg.text || msg.content, 'user');
+          } 
+          else if (msg.role === 'bot' || msg.role === 'assistant' || msg.sender === 'bot') {
+            addMessage(msg.answer || msg.text || msg.content, 'bot');
+          }
         });
 
-        messagesEl.scrollTop = messagesEl.scrollHeight;
+        // 🔹 मेसेज लोड झाल्यानंतर स्क्रीन खाली स्क्रोल करणे
+        setTimeout(() => {
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+        }, 50);
       }
+
+      // 🔹 जर हिस्ट्री ड्रॉव्हर उघडा असेल तर तो बंद करणे (Optional UI polish)
+      if (typeof closeHistoryDrawer === 'function') {
+        closeHistoryDrawer();
+      }
+
+    } else {
+      alert("⚠️ या चॅटचा इतिहास उपलब्ध नाही किंवा रिकामा आहे.");
     }
   } catch (err) {
+    removeTyping();
     console.error("Session Chat Error:", err);
+    alert("⚠️ इतिहास लोड करताना त्रुटी आली. सर्व्हर कनेक्शन तपासा.");
   }
 }
 function closeHistoryDrawer() {
