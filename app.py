@@ -91,7 +91,7 @@ def chat():
 
   answer = chatbot_response(question)
 
-  # 🔹 बॅकएंडच स्वयंचलितपणे सेशन आयडी मॅनेज करेल (HTML ची गरज नाही)
+  # 🔹 जर सेशन नसेल, तर नवीन बनवा
   if "current_chat_session" not in session:
     session["current_chat_session"] = str(uuid.uuid4())
 
@@ -118,7 +118,16 @@ def chat():
   return jsonify({"answer": answer})
 
 
-# -------------------- HISTORY (GROUPED BY SESSION) --------------------
+# 🔹 1. नवीन पेज / New Chat सुरू करण्यासाठी नवीन राऊट (याने प्रत्येक नवीन पेजला नवीन पॉईंट बनेल)
+@app.route("/new-session", methods=["POST"])
+def new_session():
+  session["current_chat_session"] = str(uuid.uuid4())
+  return jsonify(
+      {"status": "success", "session_id": session["current_chat_session"]}
+  )
+
+
+# -------------------- HISTORY --------------------
 
 
 @app.route("/history", methods=["GET"])
@@ -131,14 +140,14 @@ def history():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # 🔹 प्रत्येक session_id साठी सर्व प्रश्नांचा डेटा आणणे
+    # 🔹 प्रत्येक session_id चा एकच इतिहास पॉईंट बनवणे
     cursor.execute(
         """
             SELECT 
                 session_id,
                 (ARRAY_AGG(question ORDER BY id ASC))[1] as first_question,
                 MIN(timestamp) as session_time,
-                COUNT(id) as message_count
+                COUNT(id) as total_count
             FROM chat_history
             WHERE mobile = %s
             GROUP BY session_id
@@ -154,27 +163,22 @@ def history():
     history_list = []
     for row in rows:
       first_q = row[1]
-      msg_count = row[3]
-
-      # ५ पेक्षा जास्त प्रश्न असल्यास टायटलमध्ये दाखवेल
-      short_title = first_q[:30] + "..." if len(first_q) > 30 else first_q
-      if msg_count > 1:
-        short_title += f" ({msg_count} मेसेजेस)"
+      short_title = first_q[:28] + "..." if len(first_q) > 28 else first_q
 
       history_list.append({
-          "session_id": row[0],  # session_id पाठवला जातोय
+          "session_id": str(row[0]),
           "title": short_title,
-          "question": first_q,
           "time": str(row[2]),
+          "count": row[3],
       })
 
     return jsonify({"history": history_list}), 200
   except Exception as e:
     print("History Fetch Error:", e)
-    return jsonify({"message": "History दाखवण्यात अडचण आली.", "history": []}), 500
+    return jsonify({"message": "History एरर", "history": []}), 500
 
 
-# 🔹 एका सेशनमधील सर्व प्रश्न-उत्तरे मिळवण्यासाठी नवीन राऊट
+# 🔹 2. विशिष्ट Session चे सर्व मेसेजेस मिळवणे
 @app.route("/get-session-chat/<session_id>", methods=["GET"])
 def get_session_chat(session_id):
   user_mobile = session.get("user_mobile")
@@ -205,7 +209,7 @@ def get_session_chat(session_id):
 
     return jsonify({"messages": messages}), 200
   except Exception as e:
-    print("Session Chat Error:", e)
+    print("Fetch session error:", e)
     return jsonify({"message": "Error fetching chat"}), 500
 
 # -------------------- AUTH & OTHER ROUTES --------------------
