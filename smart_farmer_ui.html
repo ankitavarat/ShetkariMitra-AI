@@ -1127,9 +1127,9 @@ async function loadHistory() {
   try {
     historyListEl.innerHTML = '<div style="padding:15px; text-align:center; color:#666;">इतिहास लोड होत आहे...</div>';
 
+    // 🔹 GET Request मध्ये 'Content-Type' काढले आहे
     const res = await fetch(`${BACKEND_URL}/history`, {
       method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
       credentials: 'include'
     });
 
@@ -1141,15 +1141,9 @@ async function loadHistory() {
       data.history.forEach(item => {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
+        historyItem.setAttribute('data-session-id', item.session_id);
         
-        // 🔹 क्लिक चालू करण्यासाठी स्टाइल आणि इव्हेंट जोडा
         historyItem.style.cursor = 'pointer'; 
-
-        // 🔹 onclick ऐवजी addEventListener वापरणे (१००% क्लिक वर्किंग)
-        historyItem.addEventListener('click', function() {
-          console.log("Loading session:", item.session_id);
-          loadFullSessionChat(item.session_id);
-        });
 
         historyItem.innerHTML = `
           <div class="history-title" style="font-weight:600; color:#2d3748; pointer-events:none;">
@@ -1172,18 +1166,19 @@ async function loadHistory() {
   }
 }
 
-// 3. हिस्ट्रीच्या पॉईंटवर टच केल्यावर पूर्ण चॅट लोड करणे (FIXED)
 async function loadFullSessionChat(sessionId) {
   try {
     currentSessionId = sessionId; // 🔹 Global Session ID सेट करा
 
     showTyping(); // लोड होत असताना इंडिकेटर दाखवा
 
+    // 🔹 GET Request मध्ये अतिरिक्त Headers पाठवणे टाळा (415 एरर सोल्व्ह करण्यासाठी)
     const res = await fetch(`${BACKEND_URL}/get-session-chat/${sessionId}`, {
-      credentials: 'include' // 👈 Session Cookie साठी अत्यंत महत्त्वाचे
+      method: 'GET',
+      credentials: 'include' // 👈 फक्त कुकीज सोबत पाठवा, Content-Type नको
     });
-    const data = await res.json();
 
+    const data = await res.json();
     removeTyping();
 
     // 🔹 बॅकएंड कडून आलेला मेसेज डेटा मिळवा
@@ -1194,27 +1189,22 @@ async function loadFullSessionChat(sessionId) {
         messagesEl.innerHTML = ''; // 🔹 जुनी स्क्रीन पूर्ण साफ करा
 
         chatMessages.forEach(msg => {
-          // फॉरमॅट १: Flask DB चा प्रकार (एकाच ऑब्जेक्टमध्ये प्रश्न व उत्तर)
           if (msg.question && msg.answer) {
             addMessage(msg.question, 'user');
             addMessage(msg.answer, 'bot');
-          } 
-          // फॉरमॅट २: रोल/सेंटर आधारित (Role / Sender Based)
-          else if (msg.role === 'user' || msg.sender === 'user') {
+          } else if (msg.role === 'user' || msg.sender === 'user') {
             addMessage(msg.question || msg.text || msg.content, 'user');
-          } 
-          else if (msg.role === 'bot' || msg.role === 'assistant' || msg.sender === 'bot') {
+          } else if (msg.role === 'bot' || msg.role === 'assistant' || msg.sender === 'bot') {
             addMessage(msg.answer || msg.text || msg.content, 'bot');
           }
         });
 
-        // 🔹 मेसेज लोड झाल्यानंतर स्क्रीन खाली स्क्रोल करणे
         setTimeout(() => {
           messagesEl.scrollTop = messagesEl.scrollHeight;
         }, 50);
       }
 
-      // 🔹 जर हिस्ट्री ड्रॉव्हर उघडा असेल तर तो बंद करणे (Optional UI polish)
+      // ड्रॉव्हर बंद करा जर फंक्शन उपलब्ध असेल
       if (typeof closeHistoryDrawer === 'function') {
         closeHistoryDrawer();
       }
