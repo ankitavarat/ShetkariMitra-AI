@@ -1121,13 +1121,23 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 async function loadHistory() {
-  const historyListEl = document.getElementById('historyList') || document.getElementById('history-list');
-  if (!historyListEl) return;
+  const drawer = document.getElementById('historyDrawer');
+  const overlay = document.getElementById('drawerOverlay');
+  const container = document.getElementById('historyListContainer');
+
+  if (!container) return;
+
+  // 1. हिस्ट्री ड्रॉवर और ब्लैक ओवरले को स्क्रीन पर लाएं
+  if (drawer) drawer.classList.add('active');
+  if (overlay) overlay.classList.add('active');
+
+  // 2. प्रोफाइल ड्रॉपडाउन मेन्यू बंद करें
+  const menu = document.getElementById('dropdownMenu');
+  if (menu) menu.classList.remove('active');
+
+  container.innerHTML = '<div style="padding:15px; text-align:center; color:#666;">इतिहास लोड होत आहे...</div>';
 
   try {
-    historyListEl.innerHTML = '<div style="padding:15px; text-align:center; color:#666;">इतिहास लोड होत आहे...</div>';
-
-    // 🔹 GET Request मध्ये 'Content-Type' काढले आहे
     const res = await fetch(`${BACKEND_URL}/history`, {
       method: 'GET',
       credentials: 'include'
@@ -1136,57 +1146,57 @@ async function loadHistory() {
     const data = await res.json();
 
     if (res.ok && Array.isArray(data.history) && data.history.length > 0) {
-      historyListEl.innerHTML = ''; 
+      container.innerHTML = ''; 
 
       data.history.forEach(item => {
-        const historyItem = document.createElement('div');
-        historyItem.className = 'history-item';
-        historyItem.setAttribute('data-session-id', item.session_id);
+        const card = document.createElement('div');
+        card.className = 'history-item-card';
         
-        historyItem.style.cursor = 'pointer'; 
+        // कार्ड पर क्लिक करने पर पुरानी चैट लोड होगी
+        card.onclick = () => loadFullSessionChat(item.session_id);
 
-        historyItem.innerHTML = `
-          <div class="history-title" style="font-weight:600; color:#2d3748; pointer-events:none;">
-            💬 ${escapeHTML(item.title)}
-          </div>
-          <div class="history-meta" style="font-size:12px; color:#718096; display:flex; justify-content:space-between; margin-top:4px; pointer-events:none;">
-            <span>📅 ${item.time}</span>
-            <span>✉️ ${item.count} मेसेज</span>
-          </div>
+        card.innerHTML = `
+          <div class="history-item-title">💬 ${escapeHTML(item.title || 'नवीन चॅट')}</div>
+          <div class="history-item-time">📅 ${item.time || ''} • ✉️ ${item.count || 0} मेसेज</div>
         `;
 
-        historyListEl.appendChild(historyItem);
+        container.appendChild(card);
       });
     } else {
-      historyListEl.innerHTML = `<div style="padding:20px; text-align:center; color:#888;">📜 अद्याप कोणताही इतिहास उपलब्ध नाही.</div>`;
+      container.innerHTML = `<div style="padding:20px; text-align:center; color:#888;">📜 अद्याप कोणताही इतिहास उपलब्ध नाही.</div>`;
     }
   } catch (err) {
     console.error("History Fetch Error:", err);
-    historyListEl.innerHTML = `<div style="padding:15px; text-align:center; color:#e53e3e;">⚠️ इतिहास लोड करताना त्रुटी आली.</div>`;
+    container.innerHTML = `<div style="padding:15px; text-align:center; color:#e53e3e;">⚠️ इतिहास लोड करताना त्रुटी आली.</div>`;
   }
+}
+
+// सुरक्षितता के लिए escapeHTML (यदि आपके कोड में न हो तो):
+function escapeHTML(str) {
+  return String(str || '').replace(/[&<>"']/g, function(m) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+  });
 }
 
 async function loadFullSessionChat(sessionId) {
   try {
-    currentSessionId = sessionId; // 🔹 Global Session ID सेट करा
+    currentSessionId = sessionId; // Global Session ID सेट करें
 
-    showTyping(); // लोड होत असताना इंडिकेटर दाखवा
+    showTyping(); // लोड होते समय इंडिकेटर दिखाएं
 
-    // 🔹 GET Request मध्ये अतिरिक्त Headers पाठवणे टाळा (415 एरर सोल्व्ह करण्यासाठी)
     const res = await fetch(`${BACKEND_URL}/get-session-chat/${sessionId}`, {
       method: 'GET',
-      credentials: 'include' // 👈 फक्त कुकीज सोबत पाठवा, Content-Type नको
+      credentials: 'include'
     });
 
     const data = await res.json();
     removeTyping();
 
-    // 🔹 बॅकएंड कडून आलेला मेसेज डेटा मिळवा
     const chatMessages = data.messages || data.chat || (Array.isArray(data) ? data : []);
 
     if (res.ok && Array.isArray(chatMessages) && chatMessages.length > 0) {
       if (messagesEl) {
-        messagesEl.innerHTML = ''; // 🔹 जुनी स्क्रीन पूर्ण साफ करा
+        messagesEl.innerHTML = ''; // पुरानी स्क्रीन साफ करें
 
         chatMessages.forEach(msg => {
           if (msg.question && msg.answer) {
@@ -1204,10 +1214,8 @@ async function loadFullSessionChat(sessionId) {
         }, 50);
       }
 
-      // ड्रॉव्हर बंद करा जर फंक्शन उपलब्ध असेल
-      if (typeof closeHistoryDrawer === 'function') {
-        closeHistoryDrawer();
-      }
+      // 💡 यह लाइन जोड़ें ताकि चैट लोड होते ही हिस्ट्री साइडबार अपने आप बंद हो जाए
+      closeHistoryDrawer();
 
     } else {
       alert("⚠️ या चॅटचा इतिहास उपलब्ध नाही किंवा रिकामा आहे.");
