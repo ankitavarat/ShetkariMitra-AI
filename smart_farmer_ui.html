@@ -1122,36 +1122,40 @@ window.addEventListener('DOMContentLoaded', () => {
 
 async function loadHistory() {
   const historyListEl = document.getElementById('historyList') || document.getElementById('history-list');
-  
   if (!historyListEl) return;
 
   try {
-    // 🔹 लोड होत असताना Spinner किंवा Text दाखवा
     historyListEl.innerHTML = '<div style="padding:15px; text-align:center; color:#666;">इतिहास लोड होत आहे...</div>';
 
     const res = await fetch(`${BACKEND_URL}/history`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include' // 👈 हे असणे अत्यंत आवश्यक आहे (Session Cookie साठी)
+      credentials: 'include'
     });
 
     const data = await res.json();
 
     if (res.ok && Array.isArray(data.history) && data.history.length > 0) {
-      historyListEl.innerHTML = ''; // जुनी लिस्ट साफ करा
+      historyListEl.innerHTML = ''; 
 
       data.history.forEach(item => {
         const historyItem = document.createElement('div');
         historyItem.className = 'history-item';
         
-        // 🔹 जुन्या सेशनवर टच केल्यावर loadFullSessionChat() कॉल होईल
-        historyItem.onclick = () => loadFullSessionChat(item.session_id);
+        // 🔹 क्लिक चालू करण्यासाठी स्टाइल आणि इव्हेंट जोडा
+        historyItem.style.cursor = 'pointer'; 
+
+        // 🔹 onclick ऐवजी addEventListener वापरणे (१००% क्लिक वर्किंग)
+        historyItem.addEventListener('click', function() {
+          console.log("Loading session:", item.session_id);
+          loadFullSessionChat(item.session_id);
+        });
 
         historyItem.innerHTML = `
-          <div class="history-title" style="font-weight:600; color:#2d3748;">
+          <div class="history-title" style="font-weight:600; color:#2d3748; pointer-events:none;">
             💬 ${escapeHTML(item.title)}
           </div>
-          <div class="history-meta" style="font-size:12px; color:#718096; display:flex; justify-content:space-between; margin-top:4px;">
+          <div class="history-meta" style="font-size:12px; color:#718096; display:flex; justify-content:space-between; margin-top:4px; pointer-events:none;">
             <span>📅 ${item.time}</span>
             <span>✉️ ${item.count} मेसेज</span>
           </div>
@@ -1160,25 +1164,12 @@ async function loadHistory() {
         historyListEl.appendChild(historyItem);
       });
     } else {
-      historyListEl.innerHTML = `
-        <div style="padding:20px; text-align:center; color:#888;">
-          📜 अद्याप कोणताही इतिहास उपलब्ध नाही.
-        </div>`;
+      historyListEl.innerHTML = `<div style="padding:20px; text-align:center; color:#888;">📜 अद्याप कोणताही इतिहास उपलब्ध नाही.</div>`;
     }
   } catch (err) {
     console.error("History Fetch Error:", err);
-    historyListEl.innerHTML = `
-      <div style="padding:15px; text-align:center; color:#e53e3e;">
-        ⚠️ इतिहास लोड करताना त्रुटी आली.
-      </div>`;
+    historyListEl.innerHTML = `<div style="padding:15px; text-align:center; color:#e53e3e;">⚠️ इतिहास लोड करताना त्रुटी आली.</div>`;
   }
-}
-
-// 🔹 HTML injection रोखण्यासाठी मदत करणारे सोपे फंक्शन
-function escapeHTML(str) {
-  return str ? str.replace(/[&<>'"]/g, 
-    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-  ) : '';
 }
 
 // 3. हिस्ट्रीच्या पॉईंटवर टच केल्यावर पूर्ण चॅट लोड करणे (FIXED)
