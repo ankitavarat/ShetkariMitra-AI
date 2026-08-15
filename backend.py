@@ -1171,8 +1171,7 @@ def chatbot_response(question):
 
         ANSWER FORMAT:
         - Give answer in bullet points
-        - Each point starts with emoji
-        - Maximum 5 points
+        - Each point starts with emoji
         - Each point = 1 practical sentence
         - Add quantities (10 kg/acre, 7 days interval)
 
@@ -1186,7 +1185,7 @@ def chatbot_response(question):
         """
       
         response = groq_client.chat.completions.create(
-          model="llama-3.3-70b-versatile",
+          model="openai/gpt-oss-120b",
           messages=[
             {
               "role": "system",
