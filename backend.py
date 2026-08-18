@@ -1171,7 +1171,12 @@ def chatbot_response(question):
 
         ANSWER FORMAT:
         - Give answer in bullet points
-        - Each point starts with emoji
+        - Each point starts with emoji
+        - Give as many points as needed to fully answer the question
+        - Simple questions: 2-3 points
+        - Complex questions (like planting, disease): 6-8 points
+        - Each point must be practical and specific
+        - Never cut short important farming advice
         - Each point = 1 practical sentence
         - Add quantities (10 kg/acre, 7 days interval)
 
@@ -1183,9 +1188,9 @@ def chatbot_response(question):
 
         Question: {question}
         """
-      
+
         response = groq_client.chat.completions.create(
-          model="openai/gpt-oss-120b",
+          model="llama-3.3-70b-versatile",
           messages=[
             {
               "role": "system",
@@ -1197,8 +1202,7 @@ def chatbot_response(question):
             - Organic farming (Jeevamrut, Dashparni Ark, Vermicompost)
             - Pest & disease management
             - Irrigation scheduling
-            - Soil health & 
-
+            - Soil health & fertilizers
             - Maharashtra government schemes
 
             CRITICAL RULES:
@@ -1207,11 +1211,8 @@ def chatbot_response(question):
             2. Always use bullet points with emojis (•)
             3. Give specific quantities and timings
             4. Sound like trusted expert friend
-            5. Plain text only — no markdown,    no HTML  
-            6. Maximum 10 points                                                                                  
-            7. Minimum 5 points
-            8. Each point practical and specific"""
-            
+            5. Plain text only — no markdown, no HTML"""
+
             },
             {
               "role": "user",
@@ -1237,9 +1238,9 @@ def chatbot_response(question):
         clean = clean.strip()
 
         return clean
-      
+
       except Exception as e:
-       
+
        if '429' in str(e):
             logging.warning(f"Rate limit — waiting 5 sec... attempt {attempt+1}")
             time.sleep(10)
