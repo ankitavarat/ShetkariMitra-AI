@@ -1156,98 +1156,137 @@ def chatbot_response(question):
     conn.close()
 
     for attempt in range(5):
-      try:
-        prompt = f"""
-        You are ShetkariMitra AI — an expert agricultural assistant 
-        specifically for Maharashtra farmers.
+        try:
 
-        User's question: {question}
+           prompt = f"""
+    You are ShetkariMitra AI, a friendly and trustworthy agricultural assistant for farmers in Maharashtra.
 
-        LANGUAGE RULE (MOST IMPORTANT):
-        - If question has Marathi words even in Roman script 
-        (kanda, paus, sheti, lagvad, pani, gahu, bhat) 
-        → Answer FULLY in Marathi Devanagari script
-        - Current detected language: {"Marathi — use Devanagari script only" if language == "marathi" else "English"}
+   CURRENT USER QUESTION:
+   {question}
 
-        ANSWER FORMAT:
-        - Give answer in bullet points
-        - Each point starts with emoji
-        - Give as many points as needed to fully answer the question
-        - Simple questions: 2-3 points
-        - Complex questions (like planting, disease): 6-8 points
-        - Each point must be practical and specific
-        - Never cut short important farming advice
-        - Each point = 1 practical sentence
-        - Add quantities (10 kg/acre, 7 days interval)
+   LANGUAGE RULE:
+   - English question → answer ONLY in English.
+   - Marathi Devanagari question → answer ONLY in Marathi Devanagari.
+   - Roman Marathi question → answer ONLY in Marathi Devanagari.
+   - Never translate an English question into Marathi.
+   - Always determine the answer language from the CURRENT USER QUESTION.
 
-        QUALITY:
-        - Answer like experienced Maharashtra agronomist
-        - Specific to Maharashtra climate and crops
-        - Real actionable advice only
-        - No filler words
+   Examples:
+   "What is onion?" → English answer
+   "How to grow onion?" → English answer
+   "कांद्याची लागवड कशी करावी?" → Marathi Devanagari answer
+   "kandyachi lagvad kashi karavi?" → Marathi Devanagari answer
+   "kanda la pani kiti dyaycha?" → Marathi Devanagari answer
 
-        Question: {question}
-        """
+   FARMER-FRIENDLY STYLE:
+   - Talk like a knowledgeable and friendly agricultural expert.
+   - Use simple language that an ordinary Maharashtra farmer can easily understand.
+   - Do not sound like a textbook, robot, or AI.
+   - Give practical field-level advice.
+   - Give quantities, timings and intervals whenever relevant.
+   - Do not invent quantities when you are not confident.
+   - Explain the reason briefly when it helps the farmer understand.
 
-        response = groq_client.chat.completions.create(
-          model="openai/gpt-oss-120b",
-          messages=[
-            {
-              "role": "system",
-              "content": """You are ShetkariMitra AI — Maharashtra's smartest farming assistant.
+   ANSWER FORMAT:
+   - Give 2 to 5 bullet points.
+   - Start every point with a relevant emoji.
+   - Every point must be a complete sentence.
+   - Simple questions: 2-3 points.
+   - Detailed questions: up to 5 points.
+   - Give the most important information first.
+   - Never stop in the middle of a sentence.
+   - Never give an incomplete answer.
+   - Do not repeat the question.
+   - Do not add unnecessary greetings or filler.
 
-            You have deep knowledge of:
-            - Kharif & Rabi crops of Maharashtra 
-            (Onion, Tomato, Cotton, Wheat, Sugarcane, Rice)
-            - Organic farming (Jeevamrut, Dashparni Ark, Vermicompost)
-            - Pest & disease management
-            - Irrigation scheduling
-            - Soil health & fertilizers
-            - Maharashtra government schemes
+   MAHARASHTRA CONTEXT:
+   Give advice suitable for Maharashtra farming conditions whenever relevant.
 
-            CRITICAL RULES:
-            1. Roman Marathi questions (kanda, paus, sheti, lagvad) 
-            = Answer in Marathi Devanagari script ALWAYS
-            2. Always use bullet points with emojis (•)
-            3. Give specific quantities and timings
-            4. Sound like trusted expert friend
-            5. Plain text only — no markdown, no HTML"""
+   Important knowledge:
+   - Onion, Tomato, Cotton, Soybean, Wheat, Rice and Sugarcane
+   - Irrigation and water management
+   - Fertilizers and soil health
+   - Organic farming
+   - Pest and disease management
+   - Crop nutrition
+   - Weather-related farming decisions
+   - Maharashtra farming practices
 
-            },
-            {
-              "role": "user",
-              "content": prompt
-           }
-          ],
-          temperature=0.7,
-          max_tokens=500,
-          timeout=10
-        )
+   Answer the CURRENT USER QUESTION completely and clearly.
+   """
 
-        logging.info("Groq Response Generated")
-        raw = response.choices[0].message.content
-        print("Groq Raw Answer:", raw)
-        logging.info("Groq response received successfully")
+           response = groq_client.chat.completions.create(
+              model="openai/gpt-oss-120b",
 
-        clean = re.sub(r'\*\*(.+?)\*\*', r'\1', raw)
-        clean = re.sub(r'\*(.+?)\*', r'\1', clean)
-        clean = re.sub(r'#{1,6}\s', '', clean)
-        clean = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', clean)
-        clean = re.sub(r'`(.+?)`', r'\1', clean)
-        clean = re.sub(r'<[^>]+>', '', clean)
-        clean = clean.strip()
+              messages=[
+                  {
+                    "role": "system",
+                    "content": """
+   You are ShetkariMitra AI.
 
-        return clean
+   Be friendly, practical, clear and helpful.
 
-      except Exception as e:
+   LANGUAGE:
+   English question = English answer.
+   Marathi question = Marathi Devanagari answer.
+   Roman Marathi question = Marathi Devanagari answer.
 
-       if '429' in str(e):
-            logging.warning(f"Rate limit — waiting 5 sec... attempt {attempt+1}")
+   Never translate an English question into Marathi.
+
+   Give practical farming advice suitable for Maharashtra farmers.
+   Use simple language.
+   Always give complete sentences.
+   Never stop in the middle of an answer.
+   """
+                   },
+                   {
+                      "role": "user",
+                      "content": prompt
+                   }
+               ],
+
+               temperature=0.5,
+               max_completion_tokens=1000,
+               reasoning_effort="low",
+               timeout=20
+           )
+
+           logging.info("Groq Response Generated")
+
+           raw = response.choices[0].message.content
+
+           print("Groq Raw Answer:", raw)
+           print("Finish Reason:", response.choices[0].finish_reason)
+
+           logging.info(
+               f"Groq Finish Reason: {response.choices[0].finish_reason}"
+           )
+
+           clean = re.sub(r'\*\*(.+?)\*\*', r'\1', raw)
+           clean = re.sub(r'\*(.+?)\*', r'\1', clean)
+           clean = re.sub(r'#{1,6}\s', '', clean)
+           clean = re.sub(r'\[(.+?)\]\(.+?\)', r'\1', clean)
+           clean = re.sub(r'`(.+?)`', r'\1', clean)
+           clean = re.sub(r'<[^>]+>', '', clean)
+
+           clean = clean.strip()
+
+           return clean
+
+        except Exception as e:
+
+         if '429' in str(e):
+            logging.warning(
+                f"Rate limit — waiting 10 sec... attempt {attempt+1}"
+            )
             time.sleep(10)
-       else:      
-        logging.error(f"Groq Error: {e}")
-        break
+
+         else:
+            logging.error(f"Groq Error: {e}")
+            break
+
+
     if language == "marathi":
-        return "कृपया अधिक माहिती द्या."
+     return "कृपया अधिक माहिती द्या."
     else:
-        return "Please provide more information."
+     return "Please provide more information."
