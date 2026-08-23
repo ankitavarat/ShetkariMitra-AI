@@ -233,7 +233,30 @@ def get_session_chat(session_id):
         print("Fetch session error:", e)
         return jsonify({"message": "चॅट इतिहास मिळवताना त्रुटी"}), 500
 
+@app.route("/delete-session/<session_id>", methods=["DELETE"])
+def delete_session(session_id):
+    user_mobile = session.get("user_mobile")
+    if not user_mobile:
+        return jsonify({"message": "अनधिकृत (Unauthorized)"}), 401
 
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "DELETE FROM chat_history WHERE mobile = %s AND session_id = %s;",
+            (user_mobile, session_id)
+        )
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        if session.get("current_chat_session") == session_id:
+            session["current_chat_session"] = str(uuid.uuid4())
+
+        return jsonify({"message": "संभाषण यशस्वीपणे हटवले."}), 200
+    except Exception as e:
+        print("Delete session error:", e)
+        return jsonify({"message": "इतिहास हटवताना त्रुटी आली."}), 500
 # -------------------- AUTH & OTHER ROUTES --------------------
 
 
