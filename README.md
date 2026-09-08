@@ -249,7 +249,7 @@ Persistent Chat History
 Individual Chat Deletion
  ↓
 Continuous Improvements 🚀
-
+```
 ---
 
 ## 🎯 Future Improvements
