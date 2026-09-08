@@ -138,6 +138,8 @@ Chat History
   ↓
 View / Delete Individual Chats
 
+---
+
 ## 📱 Progressive Web App (PWA)
 
 ShetkariMitra AI is built as a **Progressive Web App (PWA)**, providing an app-like experience on supported devices.
