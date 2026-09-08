@@ -137,9 +137,9 @@ Conversation Stored in Database
 Chat History
  ↓
 View / Delete Individual Chats
-```  <!-- यहाँ कोड ब्लॉक बंद हो गया -->
+```
 
----  <!-- यह लाइन दो सेक्शन के बीच में एक सुंदर बॉर्डर (Divider) बना देती है -->
+---
 
 ## 📱 Progressive Web App (PWA)
 
