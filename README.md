@@ -119,26 +119,27 @@ The application supports **Marathi and English** and provides assistance related
 
 ```text
 User
-  ↓
+ ↓
 Register / Login
-  ↓
+ ↓
 Authentication
-  ↓
+ ↓
 ShetkariMitra AI
-  ↓
+ ↓
 Ask a Farming-related Question
-  ↓
+ ↓
 AI / Application Processing
-  ↓
+ ↓
 Response
-  ↓
+ ↓
 Conversation Stored in Database
-  ↓
+ ↓
 Chat History
-  ↓
+ ↓
 View / Delete Individual Chats
+```  <!-- यहाँ कोड ब्लॉक बंद हो गया -->
 
----
+---  <!-- यह लाइन दो सेक्शन के बीच में एक सुंदर बॉर्डर (Divider) बना देती है -->
 
 ## 📱 Progressive Web App (PWA)
 
@@ -149,32 +150,32 @@ ShetkariMitra AI is built as a **Progressive Web App (PWA)**, providing an app-l
 - ⚡ App-like user experience
 - 🌐 Accessible through the web
 
+---
+
 ## 🗄️ Authentication & Database
 
 ShetkariMitra AI uses **Supabase with PostgreSQL** for user authentication and persistent data storage.
 
 ### 🔐 Authentication
-
 - User registration
 - User login
 - User authentication using Supabase
 - User-specific account access
 
 ### 💾 Database
-
 PostgreSQL is used to store and manage application data, including:
-
 - User-related data
 - Chat conversations
 - Persistent chat history
 - User-specific conversation records
 
 ### 💬 Chat History Management
-
 - Conversations are stored in the database
 - Users can access their previous conversations
 - Each user's conversations are associated with their account
 - Users can delete individual conversations from their chat history
+
+---
 
 ## 🌾 What ShetkariMitra AI Can Help With
 
@@ -192,39 +193,30 @@ PostgreSQL is used to store and manage application data, including:
 ## 📸 Application Screenshots
 
 ### 🔐 Registration
-
 ![Registration](screenshot/register.jpg)
 
 ### 📝 Login
-
-![Registration](screenshot/login.jpg)
+![Login](screenshot/login.jpg)
 
 ### 🏠 Main Dashboard
-
 ![Main Dashboard](screenshot/dashboard.jpg)
 
 ### 🤖 AI Chat
-
 ![AI Chat](screenshot/chat.jpg)
 
 ### 🤖 Menu
-
 ![Menu](screenshot/menu.jpg)
 
 ### 💬 Chat History
-
 ![Chat History](screenshot/history.jpg)
 
 ### 💬 Live Market
-
 ![Live Market](screenshot/livemarket.jpg)
 
 ### 🌦️ Weather Information
-
 ![Weather Information](screenshot/weather.jpg)
 
 ### 🦠 Crop Disease Detection
-
 ![Crop Disease Detection](screenshot/disease.jpg)
 
 ---
@@ -277,8 +269,7 @@ Continuous Improvements 🚀
 
 ## 👩‍💻 Developer
 
-**Ankita Varat**
-
+**Ankita Varat**  
 **B.E. Information Technology**
 
 ### 🌱 Project Vision
@@ -288,7 +279,3 @@ ShetkariMitra AI aims to use **Artificial Intelligence and technology to make us
 ---
 
 ⭐ If you find this project interesting, consider giving it a star on GitHub.
-
-
-
-
