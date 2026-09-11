@@ -28,6 +28,26 @@ For many users, especially in rural areas, information that is technically avail
 
 ---
 
+## 💚 The Story Behind ShetkariMitra AI
+
+ShetkariMitra AI started with a personal observation.
+
+My father is a farmer, and growing up, I have seen the everyday challenges that farmers face while making decisions about weather, crops, water, market prices and crop-related problems.
+
+I realized that farmers often need different types of information at different times, but accessing the right information in a simple and understandable way can still be difficult.
+
+This made me think:
+
+> **What if one simple platform could bring useful agricultural information together and allow farmers to ask questions naturally?**
+
+That thought became the starting point of **ShetkariMitra AI**.
+
+What began as a personal idea inspired by my father's farming experience gradually developed into a larger AgriTech project combining **AI, agricultural data, weather information, market prices, voice interaction, computer vision, authentication, PostgreSQL and PWA technology.**
+
+The goal is simple:
+
+> 🌾 **Build technology that understands the real problems farmers face and makes useful information easier to access.**
+
 # 💡 Our Solution
 
 ShetkariMitra AI provides a single digital assistant where a farmer can:
