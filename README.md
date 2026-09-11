@@ -445,18 +445,6 @@ ShetkariMitra-AI/
 
 ---
 
-## 🦠 Crop Disease Detection
-
-![Disease Detection](screenshots/disease-detection.png)
-
----
-
-## 💬 Chat History
-
-![Chat History](screenshots/history.png)
-
----
-
 # 🌾 From Idea to Product
 
 ShetkariMitra AI was developed incrementally rather than as a single college-demo implementation.
