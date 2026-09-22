@@ -13,6 +13,7 @@ from backend import (
     detect_disease,
     get_weather,
     get_weather_by_coords,
+    analyze_image_with_ai
 )
 from flask import Flask, jsonify, request, send_from_directory, session
 from flask_cors import CORS
@@ -360,6 +361,74 @@ def detect():
     except Exception:
         pass
     return jsonify({"result": result})
+
+# ============================================================
+# IMAGE ANALYSIS ROUTE
+# General photo understanding will be handled here.
+# Existing /detect disease detection route remains unchanged.
+# ============================================================
+
+@app.route("/analyze-image", methods=["POST"])
+def analyze_image():
+
+    try:
+        # Check image
+        if "image" not in request.files:
+            return jsonify({
+                "answer": "⚠️ Please upload an image."
+            }), 400
+
+        image = request.files["image"]
+
+        if image.filename == "":
+            return jsonify({
+                "answer": "⚠️ Please select an image."
+            }), 400
+
+        # User's optional question
+        question = request.form.get("question", "").strip()
+
+        # Language
+        language = request.form.get("lang", "marathi").strip().lower()
+
+        # Save temporary image
+        temp_path = None
+
+        try:
+            with tempfile.NamedTemporaryFile(
+                delete=False,
+                suffix=os.path.splitext(image.filename)[1] or ".jpg"
+            ) as temp_file:
+
+                image.save(temp_file.name)
+                temp_path = temp_file.name
+
+            # Actual AI vision analysis will be connected in backend.py
+            answer = analyze_image_with_ai(
+                temp_path,
+                question,
+                language
+            )
+
+            return jsonify({
+                "answer": answer
+            })
+
+        finally:
+            # Delete temporary image
+            if temp_path and os.path.exists(temp_path):
+                try:
+                    os.remove(temp_path)
+                except Exception:
+                    pass
+
+    except Exception as e:
+
+        print("Image Analysis Error:", e)
+
+        return jsonify({
+            "answer": "⚠️ फोटोचे विश्लेषण करताना तांत्रिक समस्या आली."
+        }), 500
 
 
 @app.route("/manifest.json")
