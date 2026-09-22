@@ -13,6 +13,8 @@ import sqlite3
 import time
 import cv2
 import logging 
+import base64
+import mimetypes
 from groq import Groq
 from config import api_key, groq_key, marketing_key
 groq_client = Groq(api_key=groq_key)
@@ -895,6 +897,151 @@ def extract_city_from_question(question):
             if len(clean_word) > 2:
                 return clean_word.capitalize()
     return "Pune"
+
+# ---------------- IMAGE AI ANALYSIS ----------------
+
+def analyze_image_with_ai(image_path, question="", language="english"):
+    """
+    Analyze an uploaded image using Groq's vision-capable model.
+    Existing OpenCV disease detection remains separate.
+    """
+
+    try:
+        # Read image
+        with open(image_path, "rb") as image_file:
+            image_bytes = image_file.read()
+
+        # Convert image to Base64
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+        # Detect image type
+        mime_type, _ = mimetypes.guess_type(image_path)
+
+        if not mime_type or not mime_type.startswith("image/"):
+            mime_type = "image/jpeg"
+
+        # Language instruction
+        if language == "marathi":
+            language_instruction = """
+Answer in Marathi Devanagari.
+Use simple and natural Marathi that Maharashtra farmers can easily understand.
+Use common English agricultural terms only when useful.
+"""
+        else:
+            language_instruction = """
+Answer in clear and simple English.
+Keep the answer easy for a farmer to understand.
+"""
+
+        # If user did not type a question
+        if not question or not question.strip():
+            question = """
+Analyze this image carefully.
+
+Tell me what is visible in the image.
+If it is related to agriculture, identify the crop, plant, leaf,
+fruit, vegetable, pest, disease symptoms, field condition,
+fertilizer/product, equipment, or agricultural document if visible.
+
+Do not invent details that cannot be confirmed from the image.
+If something is uncertain, clearly say that it is uncertain.
+"""
+
+        system_prompt = f"""
+You are ShetkariMitra AI, a farmer-friendly agricultural assistant
+for Maharashtra farmers.
+
+You can understand uploaded images and answer questions about them.
+
+You may receive:
+- Crop photos
+- Plant photos
+- Leaf photos
+- Fruit or vegetable photos
+- Pest or insect photos
+- Crop disease photos
+- Farm or field photos
+- Soil photos
+- Fertilizer or agricultural product photos
+- Agricultural document photos
+- Farming equipment photos
+- General photos
+
+IMPORTANT RULES:
+
+1. Carefully analyze the visible image before answering.
+2. Answer the user's actual question.
+3. Base your answer only on information visible in the image
+   and information provided by the user.
+4. Do not invent details.
+5. If the image is unclear, say so.
+6. If a crop disease is suspected, use words such as
+   "possible", "likely", or "symptoms may indicate".
+7. Do not claim that an image alone proves a disease.
+8. Give practical agricultural guidance when relevant.
+9. For pesticide, fungicide or fertilizer recommendations,
+   do not invent unsafe doses. Tell the farmer to follow the
+   registered product label and local agricultural guidance.
+10. If the image is not agricultural, simply describe the visible
+    content and answer the user's question.
+11. Keep the answer useful and reasonably concise.
+12. Use bullet points when helpful.
+
+{language_instruction}
+"""
+
+        # IMPORTANT:
+        # gpt-oss-120b remains the normal text model.
+        # qwen3.8-27b is used here because it supports image input.
+
+        response = groq_client.chat.completions.create(
+            model="qwen/qwen3.8-27b",
+
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": question
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:{mime_type};base64,{image_base64}"
+                            }
+                        }
+                    ]
+                }
+            ],
+
+            temperature=0.3,
+            max_completion_tokens=1000,
+            top_p=1,
+            stream=False
+        )
+
+        answer = response.choices[0].message.content
+
+        if not answer:
+            return "I could not understand the image clearly. Please upload a clearer photo."
+
+        return answer.strip()
+
+    except Exception as e:
+
+        logging.exception("Image AI analysis failed")
+
+        print("Image AI Error:", e)
+
+        return (
+            "⚠️ I could not analyze this image right now. "
+            "Please upload a clear image and try again."
+        )
 # ---------------- MAIN CHATBOT ----------------
 def chatbot_response(question):
 
