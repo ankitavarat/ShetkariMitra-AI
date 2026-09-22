@@ -842,7 +842,7 @@ async function sendImageToBackend(question, imageFile){
 
     // Current UI language is mainly Marathi-first.
     // Backend AI will still use the actual question to answer.
-    formData.append('lang', 'english');
+    formData.append("lang", detectLanguage(question));
 
     formData.append('session_id', currentSessionId);
 
