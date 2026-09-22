@@ -794,54 +794,202 @@ function removeTyping(){const t=document.getElementById('typing-indicator');if(t
 
 async function sendToBackend(question){
   try{
-    const controller=new AbortController();
-    const timeout=setTimeout(()=>controller.abort(),60000);
-    const res=await fetch(`${BACKEND_URL}/chat`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+    const res = await fetch(`${BACKEND_URL}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       credentials: 'include',
-      body:JSON.stringify({question, session_id: currentSessionId}),
-      signal:controller.signal
+      body: JSON.stringify({
+        question,
+        session_id: currentSessionId
+      }),
+      signal: controller.signal
     });
+
     clearTimeout(timeout);
-    if(!res.ok)throw new Error('Server error');
-    const data=await res.json();
-    return data.answer||'No response from server.';
-  }catch(err){
-    if(err.name==='AbortError')return '⚠️ Server timeout. Please try again.';
+
+    if(!res.ok){
+      throw new Error('Server error');
+    }
+
+    const data = await res.json();
+
+    return data.answer || 'No response from server.';
+
+  } catch(err){
+
+    if(err.name === 'AbortError'){
+      return '⚠️ Server timeout. Please try again.';
+    }
+
+    console.error('Chat Error:', err);
+
     return '⚠️ Server not connected.';
   }
 }
 
+async function sendImageToBackend(question, imageFile){
+  try{
+
+    const formData = new FormData();
+
+    formData.append('image', imageFile);
+    formData.append('question', question || '');
+
+    // Current UI language is mainly Marathi-first.
+    // Backend AI will still use the actual question to answer.
+    formData.append('lang', 'english');
+
+    formData.append('session_id', currentSessionId);
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
+
+    const res = await fetch(`${BACKEND_URL}/analyze-image`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
+
+    if(!res.ok){
+      let errorMessage = 'Image analysis failed.';
+
+      try{
+        const errorData = await res.json();
+        errorMessage = errorData.error || errorMessage;
+      }catch(e){}
+
+      throw new Error(errorMessage);
+    }
+
+    const data = await res.json();
+
+    return data.answer || '⚠️ Image analysis returned no answer.';
+
+  }catch(err){
+
+    if(err.name === 'AbortError'){
+      return '⚠️ Image analysis is taking too long. Please try again.';
+    }
+
+    console.error('Image Analysis Error:', err);
+
+    return '⚠️ Could not analyze the image. Please try again with a clearer photo.';
+  }
+} 
 let isSending = false;
+let isSending = false;
+
 async function handleSend(){
+
   if(isSending) return;
-  const inp=document.getElementById('inp');
-  const question=inp.value.trim();
-  if(!question) return;
+
+  const inp = document.getElementById('inp');
+
+  const question = inp.value.trim();
+
+  // Photo bhi nahi hai aur question bhi nahi hai
+  if(!question && !pendingImageFile) return;
+
+  const imageFile = pendingImageFile;
 
   const welcomeScreen = document.getElementById('welcome-screen');
-  if (welcomeScreen) {
+
+  if(welcomeScreen){
     welcomeScreen.remove();
   }
 
   isSending = true;
-  addMessage(question,'user');inp.value='';inp.focus();showTyping();
 
-  try {
-    const answer=await sendToBackend(question);
+  // User message show karo
+  if(question){
+    addMessage(question, 'user');
+  }else{
+    addMessage('📷 Photo analysis', 'user');
+  }
+
+  inp.value = '';
+
+  showTyping();
+
+  try{
+
+    let answer;
+
+    // ==============================
+    // IMAGE + QUESTION
+    // ==============================
+
+    if(imageFile){
+
+      answer = await sendImageToBackend(
+        question,
+        imageFile
+      );
+
+    }
+
+    // ==============================
+    // NORMAL TEXT QUESTION
+    // ==============================
+
+    else{
+
+      answer = await sendToBackend(
+        question
+      );
+
+    }
+
     removeTyping();
-    addMessage(answer,'bot');
-    try{speakAnswer(answer);}catch(e){}
-    if(answer.includes('°C')||answer.includes('तापमान')){parseWeatherFromAnswer(answer);}
-  } catch(e) {
+
+    addMessage(answer, 'bot');
+
+    try{
+      speakAnswer(answer);
+    }catch(e){}
+
+    if(
+      answer.includes('°C') ||
+      answer.includes('तापमान')
+    ){
+      parseWeatherFromAnswer(answer);
+    }
+
+    // ==============================
+    // CLEAR ATTACHED IMAGE
+    // ==============================
+
+    if(imageFile && typeof removeAttachedImage === 'function'){
+      removeAttachedImage();
+    }
+
+  }catch(e){
+
     removeTyping();
-    addMessage('⚠️ काहीतरी तांत्रिक त्रुटी आली आहे.', 'bot');
-  } finally {
+
+    console.error(
+      'Send Error:',
+      e
+    );
+
+    addMessage(
+      '⚠️ काहीतरी तांत्रिक त्रुटी आली आहे.',
+      'bot'
+    );
+
+  }finally{
+
     isSending = false;
   }
 }
-
 function handleKey(e){if(e.key==='Enter'){e.preventDefault();e.stopPropagation();handleSend();}}
 function quickAsk(q){
   const welcomeScreen = document.getElementById('welcome-screen');
