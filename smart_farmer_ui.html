@@ -180,14 +180,76 @@ body{
 .typing-bubble span:nth-child(3){animation-delay:0.3s;}
 @keyframes hop{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
 
-/* INPUT BAR */
-.input-bar{
-  grid-column:2/-1;padding:16px 24px;
-  background:var(--glass-strong);backdrop-filter:blur(24px) saturate(180%);
-  border-top:1px solid var(--glass-border);
-  display:flex;gap:12px;align-items:center;
-  box-shadow:0 -4px 24px rgba(15,32,39,0.04);position:relative;z-index:10;
+/* ==================== INPUT BAR (UPDATED) ==================== */
+
+/* 1. Main Input Bar Container */
+.input-bar {
+  grid-column: 2/-1;
+  position: relative;
+  display: flex;
+  flex-direction: column; /* Preview वर आणि Controls खाली */
+  padding: 10px 18px;
+  background: var(--glass-strong);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid var(--glass-border);
+  box-shadow: 0 -4px 24px rgba(15,32,39,0.04);
+  z-index: 10;
 }
+
+/* 2. Controls Row (Mic, Input Field, Camera, Send एका ओळीत) */
+.input-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* 3. Gemini-Style Compact Image Preview Chip */
+.image-attachment-preview {
+  display: none;
+  align-items: center;
+  position: relative;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+.image-attachment-preview img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.remove-attached-image {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #0f2027;
+  color: #ffffff;
+  border: 1px solid #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 4. Chat Box Image Display */
+.msg-img-chat {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 14px;
+  margin-bottom: 6px;
+  object-fit: cover;
+  display: block;
+}
+
+/* Input Field & Buttons */
 .input-field{flex:1;border:2px solid rgba(255,255,255,0.8);border-radius:28px;padding:14px 22px;font-size:15px;font-family:inherit;color:var(--ink);background:rgba(255,255,255,0.5);outline:none;transition:all 0.2s;}
 .input-field:focus{border-color:var(--mint);background:rgba(255,255,255,0.92);box-shadow:0 0 0 4px rgba(52,211,153,0.12);}
 
@@ -245,11 +307,10 @@ body{
 
   .chat-area { grid-column: 1; }
 
-  /* MOBILE INPUT BAR OPTIMIZATION */
+  /* MOBILE INPUT BAR OPTIMIZATION (UPDATED) */
   .input-bar { 
     grid-column: 1; 
-    padding: 10px 8px; 
-    gap: 6px; 
+    padding: 8px 10px; 
   }
   .messages { padding: 16px; gap: 14px; }
   .msg { max-width: 88%; }
@@ -588,6 +649,11 @@ body{
 
 .remove-attached-image:hover {
   background: #d1d5db;
+}
+
+/* Purana alag Red Stop button hide karein */
+#voice-stop-btn, .btn-stop {
+  display: none !important;
 } 
 </style>
 </head>
@@ -736,41 +802,37 @@ body{
   </main>
 
   <!-- CONTROL INPUT BAR -->
-  <div class="input-bar">
+ <!-- CONTROL INPUT BAR -->
+<div class="input-bar">
+  <!-- १. फोटोचा Gemini Style Thumbnail Preview (इनपुटच्या वर दिसेल) -->
+  <div id="image-attachment-preview" class="image-attachment-preview">
+     <img id="attached-image-thumb" src="" alt="Preview">
+     <button type="button" class="remove-attached-image" onclick="removeAttachedImage()">✕</button>
+  </div>
+
+  <!-- २. सर्व बटणे आणि इनपुट बॉक्स (एकाच सरळ ओळीत) -->
+  <div class="input-controls-row">
     <button class="btn-action btn-voice" id="voice-btn" title="बोला" onclick="toggleVoice()">🎤</button>
-    <div id="image-attachment-preview" class="image-attachment-preview" style="display:none;">
-       <img id="attached-image-thumb" src="" alt="Attached image">
-
-       <div class="attached-image-info">
-          <span id="attached-image-name">Photo</span>
-       </div>
-
-       <button type="button"
-               class="remove-attached-image"
-               onclick="removeAttachedImage()">
-    ✕
-       </button>
-     </div>
-   
+    
     <input class="input-field" id="inp" type="text" placeholder="प्रश्न विचारा..." autocomplete="off" onkeydown="handleKey(event)"/>
-    <!-- फोटो बटण container -->
+
     <div style="position: relative;">
       <button type="button" class="btn-action" title="फोटो" onclick="toggleInputUploadMenu(event)">📷</button>
 
-      <div id="input-upload-menu" class="upload-popup-menu" style="display: none; position: absolute; bottom: 60px; right: 0; background: #ffffff; border-radius: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); padding: 6px; width: 170px; z-index: 99999; border: 1px solid #E5E7EB;">
+      <div id="input-upload-menu" class="upload-popup-menu" style="display: none; position: absolute; bottom: 55px; right: 0; background: #ffffff; border-radius: 14px; box-shadow: 0 8px 25px rgba(0,0,0,0.2); padding: 6px; width: 160px; z-index: 999; border: 1px solid #E5E7EB;">
         <div onclick="openSource('camera')" style="padding: 10px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; border-bottom: 1px solid #F3F4F6; font-size: 13.5px; font-weight: 600; color: #1F2937;">
-         📷 कॅमेरा (Camera)
+          📷 कॅमेरा (Camera)
         </div>
         <div onclick="openSource('gallery')" style="padding: 10px 12px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: #1F2937;">
-         🖼️ गॅलरी (Gallery)
+          🖼️ गॅलरी (Gallery)
         </div>
       </div>
     </div>
+
+    <!-- Send बटण (जे उत्तर जनरेट होताना ऑटोमॅटिक Stop बटण बनेल) -->
     <button class="btn-action btn-send" title="पाठवा" onclick="handleSend()">➤</button>
-    <button class="btn-action btn-stop" id="voice-stop-btn" title="आवाज थांबवा" onclick="stopVoiceOutput()">⏹</button>
   </div>
 </div>
-
 <!-- LOGIN / REGISTER POPUP MODAL -->
 <div class="modal-overlay" id="authModal">
   <div class="auth-card">
@@ -842,15 +904,43 @@ function toggleMenu(forceState) {
 
 function cleanText(t){return t.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]*>/g,'').replace(/https?:\/\/\S+/g,'').trim();}
 
-function addMessage(text,role){
-  const wrap=document.createElement('div');wrap.className='msg '+role;
-  const av=document.createElement('div');av.className='msg-avatar';av.textContent=role==='bot'?'🌾':'👨‍🌾';
-  const content=document.createElement('div');content.className='msg-content';
-  const bubble=document.createElement('div');bubble.className='msg-bubble';bubble.textContent=cleanText(text);
-  const time=document.createElement('div');time.className='msg-time';time.textContent=nowTime();
-  content.appendChild(bubble);content.appendChild(time);
-  wrap.appendChild(av);wrap.appendChild(content);
-  messagesEl.appendChild(wrap);messagesEl.scrollTop=messagesEl.scrollHeight;
+// Image support ke sath addMessage Function Update
+function addMessage(text, role, imageSrc = null) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  
+  const av = document.createElement('div');
+  av.className = 'msg-avatar';
+  av.textContent = role === 'bot' ? '🌾' : '👨‍🌾';
+  
+  const content = document.createElement('div');
+  content.className = 'msg-content';
+  
+  // Agar Image bheji gayi hai toh pehle Image element dikhaya jayega
+  if (imageSrc) {
+    const imgEl = document.createElement('img');
+    imgEl.src = imageSrc;
+    imgEl.className = 'msg-img-chat';
+    content.appendChild(imgEl);
+  }
+
+  if (text && text.trim() !== '') {
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.textContent = cleanText(text);
+    content.appendChild(bubble);
+  }
+  
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = nowTime();
+  content.appendChild(time);
+
+  wrap.appendChild(av);
+  wrap.appendChild(content);
+  
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 function showTyping(){
@@ -1005,109 +1095,59 @@ async function sendImageToBackend(question, imageFile){
 } 
 let isSending = false;
 
-async function handleSend(){
-
-  if(isSending) return;
+// handleSend function me Chat Box image preview add karein
+async function handleSend() {
+  if (isSending) return;
 
   const inp = document.getElementById('inp');
-
   const question = inp.value.trim();
 
-  // Photo bhi nahi hai aur question bhi nahi hai
-  if(!question && !pendingImageFile) return;
+  if (!question && !pendingImageFile) return;
 
   const imageFile = pendingImageFile;
+  let localImageUrl = null;
+
+  if (imageFile) {
+    localImageUrl = URL.createObjectURL(imageFile);
+  }
 
   const welcomeScreen = document.getElementById('welcome-screen');
-
-  if(welcomeScreen){
-    welcomeScreen.remove();
-  }
+  if (welcomeScreen) welcomeScreen.remove();
 
   isSending = true;
 
-  // User message show karo
-  if(question){
-    addMessage(question, 'user');
-  }else{
-    addMessage('📷 Photo analysis', 'user');
-  }
+  // Chat Bubble me Image aur User Question Render karein
+  addMessage(question, 'user', localImageUrl);
 
   inp.value = '';
+  
+  // Input Preview Clear karein
+  if (typeof removeAttachedImage === 'function') {
+    removeAttachedImage();
+  }
 
   showTyping();
 
-  try{
-
+  try {
     let answer;
-
-    // ==============================
-    // IMAGE + QUESTION
-    // ==============================
-
-    if(imageFile){
-
-      answer = await sendImageToBackend(
-        question,
-        imageFile
-      );
-
-    }
-
-    // ==============================
-    // NORMAL TEXT QUESTION
-    // ==============================
-
-    else{
-
-      answer = await sendToBackend(
-        question
-      );
-
+    if (imageFile) {
+      answer = await sendImageToBackend(question, imageFile);
+    } else {
+      answer = await sendToBackend(question);
     }
 
     removeTyping();
-
     addMessage(answer, 'bot');
 
-    try{
-      speakAnswer(answer);
-    }catch(e){}
-
-    if(
-      answer.includes('°C') ||
-      answer.includes('तापमान')
-    ){
-      parseWeatherFromAnswer(answer);
-    }
-
-    // ==============================
-    // CLEAR ATTACHED IMAGE
-    // ==============================
-
-    if(imageFile && typeof removeAttachedImage === 'function'){
-      removeAttachedImage();
-    }
-
-  }catch(e){
-
+  } catch (e) {
     removeTyping();
-
-    console.error(
-      'Send Error:',
-      e
-    );
-
-    addMessage(
-      '⚠️ काहीतरी तांत्रिक त्रुटी आली आहे.',
-      'bot'
-    );
-
-  }finally{
-
+    console.error('Send Error:', e);
+    addMessage('⚠️ काहीतरी तांत्रिक त्रुटी आली आहे.', 'bot');
+  } finally {
     isSending = false;
   }
 }
+
 function handleKey(e){if(e.key==='Enter'){e.preventDefault();e.stopPropagation();handleSend();}}
 function quickAsk(q){
   const welcomeScreen = document.getElementById('welcome-screen');
@@ -1712,6 +1752,27 @@ window.addEventListener('DOMContentLoaded', async () => {
     console.log("Auth check error", e);
   }
 });
+
+function toggleSendStopBtn(isGenerating) {
+  const sendBtn = document.querySelector('.btn-send');
+  if (!sendBtn) return;
+
+  if (isGenerating) {
+    sendBtn.innerHTML = '⏹';
+    sendBtn.style.setProperty('background', '#EF4444', 'important');
+    sendBtn.title = 'थांबवा (Stop)';
+    sendBtn.onclick = function() {
+      // Voice ya generation stop karne ke liye
+      if (typeof stopVoiceOutput === 'function') stopVoiceOutput();
+      toggleSendStopBtn(false);
+    };
+  } else {
+    sendBtn.innerHTML = '➤';
+    sendBtn.style.setProperty('background', 'linear-gradient(135deg, var(--amber), var(--amber-deep))', 'important');
+    sendBtn.title = 'पाठवा (Send)';
+    sendBtn.onclick = handleSend;
+  }
+} 
 
 
 </script>
