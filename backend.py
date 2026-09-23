@@ -920,6 +920,12 @@ def analyze_image_with_ai(image_path, question="", language="english"):
         if not mime_type or not mime_type.startswith("image/"):
             mime_type = "image/jpeg"
 
+        # Automatically detect language from the user's question
+        if question and question.strip():
+            language = detect_language(question)
+        else:
+            language = "marathi"
+
         # Language instruction
         if language == "marathi":
             language_instruction = """
