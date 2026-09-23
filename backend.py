@@ -1025,10 +1025,11 @@ IMPORTANT RULES:
                 }
             ],
 
-            temperature=0.3,
-            max_completion_tokens=1000,
-            top_p=1,
-            stream=False
+            temperature=0.2,
+            max_completion_tokens=500,
+            top_p=0.8,
+            stream=False,
+            reasoning_effort="none"
         )
 
         answer = response.choices[0].message.content
