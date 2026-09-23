@@ -977,7 +977,7 @@ CRITICAL FORMATTING RULES:
                 }
             ],
             temperature=0.2,
-            max_completion_tokens=500,
+            max_completion_tokens=1000,
             top_p=0.8,
             stream=False,
             reasoning_effort="none"
