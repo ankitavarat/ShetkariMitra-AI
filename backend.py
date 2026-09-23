@@ -903,9 +903,8 @@ def extract_city_from_question(question):
 def analyze_image_with_ai(image_path, question="", language="english"):
     """
     Analyze an uploaded image using Groq's vision-capable model.
-    Existing OpenCV disease detection remains separate.
+    Supports both English and Marathi based on user question.
     """
-
     try:
         # Read image
         with open(image_path, "rb") as image_file:
@@ -916,93 +915,46 @@ def analyze_image_with_ai(image_path, question="", language="english"):
 
         # Detect image type
         mime_type, _ = mimetypes.guess_type(image_path)
-
         if not mime_type or not mime_type.startswith("image/"):
             mime_type = "image/jpeg"
 
-        # Automatically detect language from the user's question
+        # Dynamically detect language from question
         if question and question.strip():
             language = detect_language(question)
         else:
             language = "marathi"
 
-        # Language instruction
+        # Dynamic Language Instruction
         if language == "marathi":
-            language_instruction = """
-Answer in Marathi Devanagari.
-Use simple and natural Marathi that Maharashtra farmers can easily understand.
-Use common English agricultural terms only when useful.
-"""
+            language_instruction = "Answer strictly in simple and polite Marathi (Devanagari script)."
         else:
-            language_instruction = """
-Answer in clear and simple English.
-Keep the answer easy for a farmer to understand.
-"""
+            language_instruction = "Answer strictly in simple, polite, and farmer-friendly English."
 
-        # If user did not type a question
+        # Default question if empty
         if not question or not question.strip():
-            question = """
-Analyze this image carefully.
+            if language == "marathi":
+                question = "या फोटोचे निरीक्षण करून आवश्यक ती माहिती आणि शेती सल्ला द्या."
+            else:
+                question = "Analyze this image and provide relevant agricultural advice."
 
-Tell me what is visible in the image.
-If it is related to agriculture, identify the crop, plant, leaf,
-fruit, vegetable, pest, disease symptoms, field condition,
-fertilizer/product, equipment, or agricultural document if visible.
-
-Do not invent details that cannot be confirmed from the image.
-If something is uncertain, clearly say that it is uncertain.
-"""
-
+        # FARMER-FRIENDLY SYSTEM PROMPT
         system_prompt = f"""
-You are ShetkariMitra AI, a farmer-friendly agricultural assistant
-for Maharashtra farmers.
+You are ShetkariMitra AI, a helpful agricultural assistant for farmers.
 
-You can understand uploaded images and answer questions about them.
-
-You may receive:
-- Crop photos
-- Plant photos
-- Leaf photos
-- Fruit or vegetable photos
-- Pest or insect photos
-- Crop disease photos
-- Farm or field photos
-- Soil photos
-- Fertilizer or agricultural product photos
-- Agricultural document photos
-- Farming equipment photos
-- General photos
-
-IMPORTANT RULES:
-
-1. Carefully analyze the visible image before answering.
-2. Answer the user's actual question.
-3. Base your answer only on information visible in the image
-   and information provided by the user.
-4. Do not invent details.
-5. If the image is unclear, say so.
-6. If a crop disease is suspected, use words such as
-   "possible", "likely", or "symptoms may indicate".
-7. Do not claim that an image alone proves a disease.
-8. Give practical agricultural guidance when relevant.
-9. For pesticide, fungicide or fertilizer recommendations,
-   do not invent unsafe doses. Tell the farmer to follow the
-   registered product label and local agricultural guidance.
-10. If the image is not agricultural, simply describe the visible
-    content and answer the user's question.
-11. Keep the answer useful and reasonably concise.
-12. Use bullet points when helpful.
-
-{language_instruction}
+CRITICAL FORMATTING RULES:
+1. {language_instruction}
+2. DO NOT use markdown asterisks or stars (* or **) ANYWHERE in your response.
+3. Start every point using farmer-friendly bullet emojis like:
+   - 📸 (image details)
+   - 🌱 (crop/plant advice)
+   - 🍂 (disease/pest info)
+   - 💡 (practical solution)
+   - 🧪 (fertilizer/pesticide advice)
+4. Keep sentences short, practical, and clear.
 """
-
-        # IMPORTANT:
-        # gpt-oss-120b remains the normal text model.
-        # qwen3.8-27b is used here because it supports image input.
 
         response = groq_client.chat.completions.create(
             model="qwen/qwen3.8-27b",
-
             messages=[
                 {
                     "role": "system",
@@ -1024,7 +976,6 @@ IMPORTANT RULES:
                     ]
                 }
             ],
-
             temperature=0.2,
             max_completion_tokens=500,
             top_p=0.8,
@@ -1032,23 +983,30 @@ IMPORTANT RULES:
             reasoning_effort="none"
         )
 
-        answer = response.choices[0].message.content
+        raw_answer = response.choices[0].message.content
 
-        if not answer:
-            return "I could not understand the image clearly. Please upload a clearer photo."
+        if not raw_answer:
+            return "Could not understand the image clearly." if language == "english" else "फोटो स्पष्टपणे समजला नाही."
 
-        return answer.strip()
+        # -------------------------------------------------------------
+        # CLEANUP LOGIC: Remove Stars (*) & Keep Farmer Emojis
+        # -------------------------------------------------------------
+        # 1. Bold/Italic asterisks (*) पूर्णपणे काढून टाकणे
+        clean_text = raw_answer.replace('**', '').replace('*', '')
+
+        # 2. Bullet points (* किंवा -) असल्यास तिथे - 🌱 इमोजी लावणे
+        clean_text = re.sub(r'^\s*[\*\-]\s*', '- 🌱 ', clean_text, flags=re.MULTILINE)
+
+        # 3. Extra markdown hashes/backticks घालवणे
+        clean_text = re.sub(r'#{1,6}\s', '', clean_text)
+        clean_text = re.sub(r'`(.+?)`', r'\1', clean_text)
+
+        return clean_text.strip()
 
     except Exception as e:
-
         logging.exception("Image AI analysis failed")
-
         print("Image AI Error:", e)
-
-        return (
-            "⚠️ I could not analyze this image right now. "
-            "Please upload a clear image and try again."
-        )
+        return "⚠️ Error analyzing image. Please try again." if language == "english" else "⚠️ फोटोचे विश्लेषण करताना अडचण आली."
 # ---------------- MAIN CHATBOT ----------------
 def chatbot_response(question):
 
