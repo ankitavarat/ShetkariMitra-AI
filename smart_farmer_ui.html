@@ -831,7 +831,54 @@ async function sendToBackend(question){
     return '⚠️ Server not connected.';
   }
 }
+function detectImageQuestionLanguage(question) {
 
+  if (!question || !question.trim()) {
+    return 'marathi';
+  }
+
+  // Marathi Devanagari
+  if (/[\u0900-\u097F]/.test(question)) {
+    return 'marathi';
+  }
+
+  // Common Roman Marathi words
+  const marathiWords = [
+    'kay',
+    'kaay',
+    'kase',
+    'kasa',
+    'ka',
+    'aahe',
+    'ahe',
+    'zale',
+    'zal',
+    'pan',
+    'pana',
+    'pik',
+    'rog',
+    'paani',
+    'pani',
+    'sheti',
+    'shet',
+    'khate',
+    'fawarni',
+    'paus',
+    'kanda',
+    'kapus',
+    'shetkari'
+  ];
+
+  const words = question
+    .toLowerCase()
+    .split(/\s+/);
+
+  if (words.some(word => marathiWords.includes(word))) {
+    return 'marathi';
+  }
+
+  return 'english';
+}
 async function sendImageToBackend(question, imageFile){
   try{
 
@@ -842,7 +889,7 @@ async function sendImageToBackend(question, imageFile){
 
     // Current UI language is mainly Marathi-first.
     // Backend AI will still use the actual question to answer.
-    formData.append("lang", detectLanguage(question));
+    formData.append("lang", detectImageQuestionLanguage(question));
 
     formData.append('session_id', currentSessionId);
 
