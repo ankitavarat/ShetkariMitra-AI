@@ -397,12 +397,21 @@ def detect_intent(question):
       return "today_rain"
     
     elif (
+    "udya paus" in question
+    or "उद्या पाऊस" in question
+    or "udya paus padnar" in question
+    or "उद्या पाऊस पडणार" in question
+    or "tomorrow rain" in question
+    or "rain tomorrow" in question
+    ):
+       return "tomorrow_rain"
+
+    elif (
     "udya" in question
     or "उद्या" in question
     or "tomorrow" in question
-    or "tomorrow weather" in question
     ):
-      return "tomorrow_weather"
+       return "tomorrow_weather"
     
     elif (
     "market" in question
@@ -1148,7 +1157,7 @@ def chatbot_response(question):
 
       return "Please specify crop name."
 
-    if intent in ["today_rain", "tomorrow_weather"]:
+    if intent in ["today_rain","tomorrow_rain", "tomorrow_weather"]:
 
      words = question.split()
 
@@ -1163,12 +1172,19 @@ def chatbot_response(question):
             language
         )
 
+     if intent == "tomorrow_rain":
+
+        return get_tomorrow_rain(
+          city,
+          language
+         )
+
      if intent == "tomorrow_weather":
 
-        return get_tomorrow_weather(
+         return get_tomorrow_weather(
             city,
             language
-        )
+     )
 
     # ---------------- WEATHER ----------------
     if (
