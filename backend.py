@@ -631,7 +631,92 @@ def get_tomorrow_rain(city, language):
             "💧 Irrigate crops if required."
         )       
 
+def get_tomorrow_weather(city, language):
 
+    forecast = get_forecast(city)
+
+    if forecast is None:
+
+        if language == "marathi":
+            return "हवामान माहिती उपलब्ध नाही."
+
+        else:
+            return "Weather information not available."
+
+    try:
+
+        tomorrow_weather = forecast["list"][8]["weather"][0]["main"]
+
+        tomorrow_description = (
+            forecast["list"][8]["weather"][0]["description"]
+        )
+
+        tomorrow_temp = forecast["list"][8]["main"]["temp"]
+
+        tomorrow_humidity = forecast["list"][8]["main"]["humidity"]
+
+    except Exception as e:
+
+        logging.error(
+            f"Tomorrow weather parsing error: {e}"
+        )
+
+        if language == "marathi":
+            return "उद्याचे हवामान उपलब्ध नाही."
+
+        else:
+            return "Tomorrow's weather information is not available."
+
+    # Rain status
+    if tomorrow_weather.lower() in [
+        "rain",
+        "drizzle",
+        "thunderstorm"
+    ]:
+
+        rain_status_mr = "🌧️ पावसाची शक्यता आहे."
+        rain_status_en = "🌧️ Rain is expected."
+
+    else:
+
+        rain_status_mr = "☀️ पावसाची शक्यता दिसत नाही."
+        rain_status_en = "☀️ No rain is expected."
+
+    # Marathi answer
+    if language == "marathi":
+
+        return (
+            f"🌤️ {city} मध्ये उद्याचे हवामान\n\n"
+
+            f"🌡️ तापमान : {tomorrow_temp:.1f}°C\n"
+
+            f"💧 आर्द्रता : {tomorrow_humidity}%\n"
+
+            f"☁️ हवामान : {tomorrow_description}\n\n"
+
+            f"{rain_status_mr}\n\n"
+
+            "🌾 शेतकरी सल्ला : "
+            "हवामानानुसार शेतीची कामे नियोजित करा."
+        )
+
+    # English answer
+    else:
+
+        return (
+            f"🌤️ Tomorrow's weather in {city}\n\n"
+
+            f"🌡️ Temperature : {tomorrow_temp:.1f}°C\n"
+
+            f"💧 Humidity : {tomorrow_humidity}%\n"
+
+            f"☁️ Condition : {tomorrow_description}\n\n"
+
+            f"{rain_status_en}\n\n"
+
+            "🌾 Farmer Tip : "
+            "Plan farming activities according to the weather."
+        )
 # ---------------- DATABASE RESPONSE ----------------
 def get_database_response(question, language):
 
@@ -1080,7 +1165,7 @@ def chatbot_response(question):
 
      if intent == "tomorrow_weather":
 
-        return get_tomorrow_rain(
+        return get_tomorrow_weather(
             city,
             language
         )
