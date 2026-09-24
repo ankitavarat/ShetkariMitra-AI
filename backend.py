@@ -1182,10 +1182,11 @@ def chatbot_response(question):
             language
         )
 
-    if intent == "today_weather":
+     if intent == "today_weather":
          
           return get_weather(
-              city, language
+              city,
+              language
           )  
 
      if intent == "tomorrow_rain":
