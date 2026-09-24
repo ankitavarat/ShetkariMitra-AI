@@ -1182,12 +1182,35 @@ def chatbot_response(question):
             language
         )
 
+
      if intent == "today_weather":
-         
-          return get_weather(
-              city,
-              language
-          )  
+         weather_data = get_weather(city, language)
+
+         if not weather_data:
+            return "माफ करा 🙏 आजचं हवामान मिळवताना थोडी अडचण आली. कृपया पुन्हा प्रयत्न करा."
+
+         temp = weather_data.get("temp", "N/A")
+         humidity = weather_data.get("humidity", "N/A")
+         condition = weather_data.get("weather", "N/A")
+
+         if language == "marathi":
+              return (
+                f"🌤️ {city}चं आजचं हवामान असं आहे:\n\n"
+                f"🌡️ तापमान: {temp}°C\n"
+                f"💧 आर्द्रता: {humidity}%\n"
+                f"☁️ हवामान: {condition}\n\n"
+                f"🌱 शेतासाठी काही कामाचं नियोजन असेल तर हवामान लक्षात घेऊन करा. "
+                f"काही विचारायचं असेल तर मला सांगा 😊"
+              )
+
+         return (
+             f"🌤️ Here's today's weather in {city}:\n\n"
+             f"🌡️ Temperature: {temp}°C\n"
+             f"💧 Humidity: {humidity}%\n"
+             f"☁️ Condition: {condition}\n\n"
+             f"🌱 If you're planning any farm work today, keep the weather in mind. "
+             f"Let me know if you'd like help with anything else 😊"
+         )   
 
      if intent == "tomorrow_rain":
 
