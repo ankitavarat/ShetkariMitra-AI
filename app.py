@@ -83,7 +83,10 @@ init_db()
 @app.route("/")
 def index():
     return send_from_directory(".", "smart_farmer_ui.html")
-
+# -------------------- HEALTH / PING CHECK --------------------
+@app.route("/ping", methods=["GET"])
+def ping():
+    return "OK", 200
 
 # -------------------- CHAT --------------------
 
