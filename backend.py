@@ -209,96 +209,90 @@ def get_forecast(city):
 
         return None    
 
-
-def get_market_price(crop, language):
-
+def get_market_price(crop, language="marathi"):
     logging.info("Entered get_market_price()")
 
-    url = f"https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key={marketing_key}&format=json&limit=5&filters%5Bstate.keyword%5D=Maharashtra&filters%5Bcommodity%5D={crop}"
-
-    headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0 Safari/537.36"
-   }
-
-    # Marathi → English crop mapping
     crop_map = {
-        "kanda": "Onion",
-        "kapus": "Cotton",
-        "batata": "Potato",
+        "kanda": "Onion", "onion": "Onion", "kaanda": "Onion",
+        "kapus": "Cotton", "cotton": "Cotton",
+        "batata": "Potato", "potato": "Potato",
         "tomato": "Tomato",
-        "wheat": "Wheat",
-        "rice": "Rice",
-        "sugarcane": "Sugarcane"
+        "wheat": "Wheat", "gahu": "Wheat",
+        "rice": "Rice", "tandal": "Rice", "bhat": "Rice",
+        "sugarcane": "Sugarcane", "us": "Sugarcane"
     }
 
-    crop_name = crop_map.get(crop.lower(), crop.title())
+    crop_clean = crop.strip().lower()
+    crop_name = crop_map.get(crop_clean, crop.title())
 
+    # 1. Primary Filtered API URL
+    url = f"https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key={marketing_key}&format=json&limit=10&filters%5Bstate.keyword%5D=Maharashtra&filters%5Bcommodity%5D={crop_name}"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
 
     try:
         logging.info(f"Crop Requested: {crop_name}")
 
-        response = requests.get(
-            url,
-            headers=headers,
-            timeout=15
-        )
+        response = requests.get(url, headers=headers, timeout=10)
+        records = []
 
-        logging.info(f"Market API Status: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            records = data.get("records", [])
 
-        data = response.json()
+        # 2. FALLBACK: Agar exact filter se records nahi mile, toh General Maharashtra query chalayein
+        if not records:
+            fallback_url = f"https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key={marketing_key}&format=json&limit=50&filters%5Bstate.keyword%5D=Maharashtra"
+            fallback_res = requests.get(fallback_url, headers=headers, timeout=10)
+            
+            if fallback_res.status_code == 200:
+                all_records = fallback_res.json().get("records", [])
+                # Python filter for matching crop
+                records = [r for r in all_records if crop_name.lower() in r.get("commodity", "").lower()][:5]
 
-        if response.status_code != 200:
-            return "❌ Market API Error"
-
-        if not data.get("records"):
+        if not records:
             if language == "marathi":
-                return f"❌ {crop_name} चा भाव सापडला नाही."
-            return f"❌ Price not found for {crop_name}."
+                return f"❌ {crop_name} (कांदा/पीक) चा आजचा लाईव्ह बाजारभाव अपडेट झालेला नाही."
+            return f"❌ Live market price currently not available for {crop_name}."
 
         results = []
 
-        for item in data["records"]:
+        for item in records:
+            commodity = item.get("commodity", crop_name)
+            market = item.get("market", "जिल्हा बाजार")
+            date = item.get("arrival_date", "आज")
+            district = item.get("district", "")
 
-            commodity = item.get("commodity", "")
-            market = item.get("market", "")
-            date = item.get("arrival_date", "")
-
-            min_price = item.get("min_price", "")
-            max_price = item.get("max_price", "")
-            modal_price = item.get("modal_price", "")
+            min_price = item.get("min_price", "--")
+            max_price = item.get("max_price", "--")
+            modal_price = item.get("modal_price", "--")
 
             if language == "marathi":
-
                 results.append(
-                    f"🌾 पीक : {commodity}\n"
-                    f"📍 बाजार : {market}\n"
-                    f"📅 तारीख : {date}\n"
-                    f"🗺 जिल्हा : {item.get('district', '')}\n"
-                    f"💰 किमान : ₹{min_price}|💰 कमाल : ₹{max_price}|💰 सरासरी : ₹{modal_price}"
-                    
+                    f"🌾 **पीक**: {commodity}\n"
+                    f"📍 **बाजार**: {market} ({district})\n"
+                    f"📅 **तारीख**: {date}\n"
+                    f"💰 **किमान**: ₹{min_price} | **कमाल**: ₹{max_price} | **सरासरी**: ₹{modal_price} (प्रति क्विंटल)"
                 )
-
             else:
-
                 results.append(
-                    f"🌾 Crop : {commodity}\n"
-                    f"📍 Market : {market}\n"
-                    f"📅 Date : {date}\n"
-                    f"🗺 District : {item.get('district', '')}\n"
-                    f"💰 Min : ₹{min_price}|💰 Max : ₹{max_price}|💰 Modal : ₹{modal_price}"
-                    
+                    f"🌾 **Crop**: {commodity}\n"
+                    f"📍 **Market**: {market} ({district})\n"
+                    f"📅 **Date**: {date}\n"
+                    f"💰 **Min**: ₹{min_price} | **Max**: ₹{max_price} | **Modal**: ₹{modal_price} (per quintal)"
                 )
 
-        return "\n\n".join(results)
+        return "\n\n---\n\n".join(results)
 
     except Exception as e:
-
         logging.error(f"Market API Error: {e}")
-
         if language == "marathi":
-            return "❌ बाजारभाव माहिती उपलब्ध नाही."
+            return "❌ सध्या तांत्रिक कारणास्तव बाजारभाव माहिती उपलब्ध होऊ शकली नाही."
+        return "❌ Market price currently unavailable."
 
-        return "❌ Market price not available."
+
 # ---------------- VOICE INPUT ----------------
 # def get_voice_input():
 
