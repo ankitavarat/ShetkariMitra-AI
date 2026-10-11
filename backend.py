@@ -967,7 +967,7 @@ CITY_MAP = {
 
 def extract_city_from_question(question):
     skip_words = [
-        "weather", "havaman", "हवामान", "आजचे", "आजचं",
+        "weather", "havaman", "हवामान", "आज", "आजचे", "आजचं",
         "उद्या", "उद्याचे", "पाऊस", "पडणार", "आहे", "का",
         "मध्ये", "सांगा", "काय", "कसा", "कसे", "aaj",
         "udya", "paus", "padnar", "aahe", "ka", "madhe",
@@ -983,7 +983,7 @@ def extract_city_from_question(question):
         if any('\u0900' <= c <= '\u097F' for c in clean_word):
             if clean_word in CITY_MAP:
                 return CITY_MAP[clean_word]
-            if clean_word in ["हवामान","पाऊस","उद्या","आजचे","मध्ये","आहे","का","सांगा","पडणार"]:
+            if clean_word in ["हवामान","पाऊस","उद्या","आजचे","आज","मध्ये","आहे","का","सांगा","पडणार"]:
                 continue
             try:
                 from indic_transliteration import sanscript
