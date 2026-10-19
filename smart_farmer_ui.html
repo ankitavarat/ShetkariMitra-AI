@@ -1103,60 +1103,48 @@ function removeAttachedImage() {
   if (inp) inp.placeholder = 'प्रश्न विचारा...';
 }
 
-// VOICE INPUT (WITH ERROR & NO-SPEECH CHAT MESSAGES)
+// CLASSY & PROFESSIONAL VOICE INPUT MODULE
 let isRecording = false;
 let recognition = null;
 
 function toggleVoice(){
   const btn = document.getElementById('voice-btn');
   const inp = document.getElementById('inp');
-
+  
   if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-    addMessage('⚠️ Voice recognition फक्त Chrome मध्ये कार्य करते.','bot');
+    addMessage('⚠️ Voice recognition फक्त Google Chrome मध्ये चालते.', 'bot');
     return;
   }
 
-  // १. जर आधीच रेकॉर्डिंग चालू असेल तर थांबवा
+  // जर आधीच रेकॉर्डिंग चालू असेल तर मॅन्युअली बंद करा
   if(isRecording){
     if(recognition) recognition.stop();
+    btn.textContent = '🎤';
+    btn.classList.remove('recording');
+    isRecording = false;
     return;
   }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
-  
-  const currentText = inp.value.trim();
-  const isEnglishInput = /^[a-zA-Z0-9\s]+$/.test(currentText) && currentText.length > 0;
-  
-  recognition.lang = isEnglishInput ? 'en-IN' : 'mr-IN';
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
 
+  // 🎯 मराठी आणि इंग्रजी (Hinglish) दोन्ही भाषांचा सपोर्ट
+  const currentText = inp ? inp.value.trim() : '';
+  const isEnglishInput = /^[a-zA-Z0-9\s]+$/.test(currentText) && currentText.length > 0;
+
+  recognition.lang = isEnglishInput ? 'en-IN' : 'mr-IN';
+  recognition.interimResults = true; // बोलतानाच शब्द इनपुटमध्ये टाईप होतील
+  recognition.maxAlternatives = 2;
+
+  // 🎯 मायक्रोफोन सुरू होताच क्लासिक प्लेसहोल्डर फीडबॅक
   inp.value = '';
+  inp.placeholder = '🎙️ ऐकत आहे (मराठी / English बोला)...';
   btn.textContent = '⏹';
   btn.classList.add('recording');
   isRecording = true;
 
-  // 🎯 चॅट बॉक्समध्ये तात्पुरता "ऐकत आहे" चा बबल तयार करा
-  let listeningMsgEl = document.getElementById('voice-listening-indicator');
-  if(!listeningMsgEl) {
-    listeningMsgEl = document.createElement('div');
-    listeningMsgEl.id = 'voice-listening-indicator';
-    listeningMsgEl.className = 'msg user';
-    listeningMsgEl.innerHTML = `
-      <div class="msg-avatar">👨‍🌾</div>
-      <div class="msg-content">
-        <div class="msg-bubble" style="background: linear-gradient(135deg, #10B981, #0EA5E9); animation: pulse-rec 1.5s infinite;">
-          🎙️ ऐकत आहे, बोला...
-        </div>
-      </div>
-    `;
-    messagesEl.appendChild(listeningMsgEl);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-  }
-
   recognition.onstart = () => {
-    console.log("Listening started...");
+    console.log("Voice recording active...");
   };
 
   recognition.onresult = (event) => {
@@ -1170,18 +1158,16 @@ function toggleVoice(){
     }
   };
 
-  // 🎯 आवाज समजला नाही किंवा नेटवर्क एरर आल्यास
+  // 🎯 आवाज आला नाही तर बॉटकडून क्लासिक मेसेज
   recognition.onerror = (event) => {
     console.error('Speech recognition error:', event.error);
-    const indicator = document.getElementById('voice-listening-indicator');
-    if (indicator) indicator.remove();
-
+    
     if (event.error === 'no-speech') {
-      addMessage('⚠️ आवाज स्पष्ट ऐकू आला नाही, कृपया मायक्रोफोन जवळ घेऊन पुन्हा बोला.', 'bot');
+      addMessage('🎙️ आवाज स्पष्ट ऐकू आला नाही. कृपया मायक्रोफोन जवळ घेऊन पुन्हा बोला.', 'bot');
     } else if (event.error === 'network') {
-      addMessage('⚠️ इंटरनेट कनेक्शन धीमे आहे, कृपया नेटवर्क तपासा.', 'bot');
+      addMessage('⚠️ इंटरनेट कनेक्शन धीमे आहे. कृपया नेटवर्क तपासा.', 'bot');
     } else {
-      addMessage('⚠️ आवाज रेकॉर्ड करताना त्रुटी आली, पुन्हा प्रयत्न करा.', 'bot');
+      addMessage('⚠️ आवाज रेकॉर्ड करताना काही अडचण आली. पुन्हा प्रयत्न करा.', 'bot');
     }
   };
 
@@ -1189,14 +1175,13 @@ function toggleVoice(){
     isRecording = false;
     btn.textContent = '🎤';
     btn.classList.remove('recording');
-
-    // "ऐकत आहे" चा बबल काढून टाका
-    const indicator = document.getElementById('voice-listening-indicator');
-    if (indicator) indicator.remove();
     
-    const query = inp.value.trim();
-    if (query !== '') {
-      handleSend(); // बोललेला प्रश्न पाठवा
+    const finalQuery = inp.value.trim();
+    if (finalQuery !== '') {
+      inp.placeholder = 'प्रश्न विचारा...';
+      handleSend(); // बोललेले वाक्य ऑटोमॅटिक पाठवेल
+    } else {
+      inp.placeholder = 'प्रश्न विचारा...';
     }
   };
 
@@ -1207,8 +1192,7 @@ function toggleVoice(){
     isRecording = false;
     btn.textContent = '🎤';
     btn.classList.remove('recording');
-    const indicator = document.getElementById('voice-listening-indicator');
-    if (indicator) indicator.remove();
+    inp.placeholder = 'प्रश्न विचारा...';
   }
 }
 function stopVoiceOutput() {
