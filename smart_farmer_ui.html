@@ -1103,7 +1103,7 @@ function removeAttachedImage() {
   if (inp) inp.placeholder = 'प्रश्न विचारा...';
 }
 
-// VOICE INPUT (MARATHI + ENGLISH AUTO-SUPPORT)
+// VOICE INPUT (WITH ERROR & NO-SPEECH CHAT MESSAGES)
 let isRecording = false;
 let recognition = null;
 
@@ -1116,7 +1116,7 @@ function toggleVoice(){
     return;
   }
 
-  // १. रेकॉर्डिंग चालू असल्यास थांबवा
+  // १. जर आधीच रेकॉर्डिंग चालू असेल तर थांबवा
   if(isRecording){
     if(recognition) recognition.stop();
     return;
@@ -1125,23 +1125,38 @@ function toggleVoice(){
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   
-  // 🎯 बदल: जर इनपुट बॉक्समध्ये आधीच इंग्रजी टाईप केले असेल तर 'en-IN' घेईल, नाहीतर डिफॉल्ट 'mr-IN' (मराठी)
   const currentText = inp.value.trim();
   const isEnglishInput = /^[a-zA-Z0-9\s]+$/.test(currentText) && currentText.length > 0;
   
   recognition.lang = isEnglishInput ? 'en-IN' : 'mr-IN';
-  recognition.interimResults = true; // बोलायचा शब्द लगेच दिसेल
-  recognition.maxAlternatives = 3;   // मराठी आणि इंग्रजी पर्यायांपैकी सर्वोत्तम शब्द निवडण्यासाठी
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
 
-  // २. तात्काळ रिस्पॉन्स देणे
   inp.value = '';
-  inp.placeholder = '🎙️ ऐकत आहे (मराठी / English बोला)...';
   btn.textContent = '⏹';
   btn.classList.add('recording');
   isRecording = true;
 
+  // 🎯 चॅट बॉक्समध्ये तात्पुरता "ऐकत आहे" चा बबल तयार करा
+  let listeningMsgEl = document.getElementById('voice-listening-indicator');
+  if(!listeningMsgEl) {
+    listeningMsgEl = document.createElement('div');
+    listeningMsgEl.id = 'voice-listening-indicator';
+    listeningMsgEl.className = 'msg user';
+    listeningMsgEl.innerHTML = `
+      <div class="msg-avatar">👨‍🌾</div>
+      <div class="msg-content">
+        <div class="msg-bubble" style="background: linear-gradient(135deg, #10B981, #0EA5E9); animation: pulse-rec 1.5s infinite;">
+          🎙️ ऐकत आहे, बोला...
+        </div>
+      </div>
+    `;
+    messagesEl.appendChild(listeningMsgEl);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
   recognition.onstart = () => {
-    console.log("Voice Recognition Started in lang:", recognition.lang);
+    console.log("Listening started...");
   };
 
   recognition.onresult = (event) => {
@@ -1155,12 +1170,18 @@ function toggleVoice(){
     }
   };
 
+  // 🎯 आवाज समजला नाही किंवा नेटवर्क एरर आल्यास
   recognition.onerror = (event) => {
     console.error('Speech recognition error:', event.error);
-    if(event.error === 'network') {
-      inp.placeholder = '⚠️ इंटरनेट कनेक्शन तपासा...';
+    const indicator = document.getElementById('voice-listening-indicator');
+    if (indicator) indicator.remove();
+
+    if (event.error === 'no-speech') {
+      addMessage('⚠️ आवाज स्पष्ट ऐकू आला नाही, कृपया मायक्रोफोन जवळ घेऊन पुन्हा बोला.', 'bot');
+    } else if (event.error === 'network') {
+      addMessage('⚠️ इंटरनेट कनेक्शन धीमे आहे, कृपया नेटवर्क तपासा.', 'bot');
     } else {
-      inp.placeholder = '⚠️ पुन्हा प्रयत्न करा...';
+      addMessage('⚠️ आवाज रेकॉर्ड करताना त्रुटी आली, पुन्हा प्रयत्न करा.', 'bot');
     }
   };
 
@@ -1168,13 +1189,14 @@ function toggleVoice(){
     isRecording = false;
     btn.textContent = '🎤';
     btn.classList.remove('recording');
+
+    // "ऐकत आहे" चा बबल काढून टाका
+    const indicator = document.getElementById('voice-listening-indicator');
+    if (indicator) indicator.remove();
     
     const query = inp.value.trim();
     if (query !== '') {
-      inp.placeholder = 'प्रश्न विचारा...';
-      handleSend(); // आपोआप उत्तर शोधायला पाठवा
-    } else {
-      inp.placeholder = 'प्रश्न विचारा...';
+      handleSend(); // बोललेला प्रश्न पाठवा
     }
   };
 
@@ -1185,7 +1207,8 @@ function toggleVoice(){
     isRecording = false;
     btn.textContent = '🎤';
     btn.classList.remove('recording');
-    inp.placeholder = 'प्रश्न विचारा...';
+    const indicator = document.getElementById('voice-listening-indicator');
+    if (indicator) indicator.remove();
   }
 }
 function stopVoiceOutput() {
