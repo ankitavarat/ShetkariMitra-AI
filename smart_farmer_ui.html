@@ -1103,55 +1103,91 @@ function removeAttachedImage() {
   if (inp) inp.placeholder = 'प्रश्न विचारा...';
 }
 
-// VOICE INPUT & OUTPUT FIX
+// VOICE INPUT (MARATHI + ENGLISH AUTO-SUPPORT)
 let isRecording = false;
 let recognition = null;
 
 function toggleVoice(){
   const btn = document.getElementById('voice-btn');
+  const inp = document.getElementById('inp');
+
   if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-    addMessage('⚠️ Voice recognition Chrome मध्येच कार्य करते.','bot');
+    addMessage('⚠️ Voice recognition फक्त Chrome मध्ये कार्य करते.','bot');
     return;
   }
 
+  // १. रेकॉर्डिंग चालू असल्यास थांबवा
   if(isRecording){
     if(recognition) recognition.stop();
-    btn.textContent = '🎤';
-    btn.classList.remove('recording');
-    isRecording = false;
     return;
   }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
-  recognition.lang = 'mr-IN';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
+  
+  // 🎯 बदल: जर इनपुट बॉक्समध्ये आधीच इंग्रजी टाईप केले असेल तर 'en-IN' घेईल, नाहीतर डिफॉल्ट 'mr-IN' (मराठी)
+  const currentText = inp.value.trim();
+  const isEnglishInput = /^[a-zA-Z0-9\s]+$/.test(currentText) && currentText.length > 0;
+  
+  recognition.lang = isEnglishInput ? 'en-IN' : 'mr-IN';
+  recognition.interimResults = true; // बोलायचा शब्द लगेच दिसेल
+  recognition.maxAlternatives = 3;   // मराठी आणि इंग्रजी पर्यायांपैकी सर्वोत्तम शब्द निवडण्यासाठी
+
+  // २. तात्काळ रिस्पॉन्स देणे
+  inp.value = '';
+  inp.placeholder = '🎙️ ऐकत आहे (मराठी / English बोला)...';
+  btn.textContent = '⏹';
+  btn.classList.add('recording');
+  isRecording = true;
 
   recognition.onstart = () => {
-    isRecording = true;
-    btn.textContent = '⏹';
-    btn.classList.add('recording');
+    console.log("Voice Recognition Started in lang:", recognition.lang);
   };
 
   recognition.onresult = (event) => {
-    document.getElementById('inp').value = event.results[0][0].transcript;
-    handleSend();
+    let transcript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      transcript += event.results[i][0].transcript;
+    }
+    
+    if (transcript.trim() !== '') {
+      inp.value = transcript;
+    }
   };
 
   recognition.onerror = (event) => {
-    console.error('Speech recognition error:', event);
+    console.error('Speech recognition error:', event.error);
+    if(event.error === 'network') {
+      inp.placeholder = '⚠️ इंटरनेट कनेक्शन तपासा...';
+    } else {
+      inp.placeholder = '⚠️ पुन्हा प्रयत्न करा...';
+    }
   };
 
   recognition.onend = () => {
     isRecording = false;
     btn.textContent = '🎤';
     btn.classList.remove('recording');
+    
+    const query = inp.value.trim();
+    if (query !== '') {
+      inp.placeholder = 'प्रश्न विचारा...';
+      handleSend(); // आपोआप उत्तर शोधायला पाठवा
+    } else {
+      inp.placeholder = 'प्रश्न विचारा...';
+    }
   };
 
-  recognition.start();
+  try {
+    recognition.start();
+  } catch(e) {
+    console.error("Speech Start Error:", e);
+    isRecording = false;
+    btn.textContent = '🎤';
+    btn.classList.remove('recording');
+    inp.placeholder = 'प्रश्न विचारा...';
+  }
 }
-
 function stopVoiceOutput() {
   if (window.speechSynthesis) {
     window.speechSynthesis.cancel();
