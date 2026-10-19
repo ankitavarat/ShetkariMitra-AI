@@ -1111,29 +1111,29 @@ function removeAttachedImage() {
 
 let isRecording = false;
 let recognition = null;
+let speechTimer = null; // Custom timer silence handle karne ke liye
 
 function toggleVoice(){
   const btn = document.getElementById('voice-btn');
   const inp = document.getElementById('inp');
 
   if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-    addMessage('⚠️ Voice recognition फक्त Chrome मध्ये कार्य करते.','bot');
+    addMessage('⚠️ Voice recognition Chrome me hi kaam karta hai.','bot');
     return;
   }
 
-  // १. जर आधीच रेकॉर्डिंग चालू असेल तर बंद करा
+  // 1. Agar pehle se recording chal rahi ho toh manually stop karein
   if(isRecording){
     if(recognition) recognition.stop();
+    if(speechTimer) clearTimeout(speechTimer);
     return;
   }
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   recognition = new SR();
   
-  // भाषा निवड (मराठी/इंग्रजी)
-  const currentText = inp ? inp.value.trim() : '';
-  const isEnglishInput = /^[a-zA-Z0-9\s]+$/.test(currentText) && currentText.length > 0;
-  recognition.lang = isEnglishInput ? 'en-IN' : 'mr-IN';
+  // 🎯 Fix 1: Default language ko 'en-IN' rakha hai taaki English aur Mixed accent accurately type ho
+  recognition.lang = 'en-IN';
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
 
@@ -1142,7 +1142,7 @@ function toggleVoice(){
   btn.classList.add('recording');
   isRecording = true;
 
-  // 🎯 २. मायक्रोफोन सुरू होताच तात्पुरता "ऐकत आहे..." चा मेसेज बॉटच्या बाजूने दिसेल
+  // 🎯 Temporary "ऐकत आहे..." indicator
   let listeningMsgEl = document.getElementById('voice-listening-indicator');
   if(!listeningMsgEl) {
     listeningMsgEl = document.createElement('div');
@@ -1158,6 +1158,16 @@ function toggleVoice(){
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
+  // 🎯 Fix 2: Timer - Agar 6 seconds tak user kuch nahi bola toh automatic error message dikhayega
+  speechTimer = setTimeout(() => {
+    if (isRecording && inp.value.trim() === '') {
+      if (recognition) recognition.stop();
+      const indicator = document.getElementById('voice-listening-indicator');
+      if (indicator) indicator.remove();
+      addMessage('🎤 आवाज समजला नाही. पुन: प्रयत्न करा.', 'bot');
+    }
+  }, 6000);
+
   recognition.onstart = () => {
     console.log("Listening started...");
   };
@@ -1169,23 +1179,24 @@ function toggleVoice(){
     }
 
     if (transcript.trim() !== '') {
+      // User ne bolna shuru kiya toh timeout clear kar do
+      if(speechTimer) clearTimeout(speechTimer);
+      
       inp.value = transcript;
       
-      // 🎯 युझर बोलू लागताच "ऐकत आहे..." चा तात्पुरता मेसेज स्क्रीनवरून लगेच निघून जाईल
+      // Temporary bubble remove kar do
       const indicator = document.getElementById('voice-listening-indicator');
       if (indicator) indicator.remove();
     }
   };
 
-  // 🎯 ३. जर युझर काहीच बोलला नाही (no-speech) किंवा एरर आला
   recognition.onerror = (event) => {
     console.error('Speech recognition error:', event.error);
+    if(speechTimer) clearTimeout(speechTimer);
     
-    // "ऐकत आहे..." चा मेसेज काढून टाका
     const indicator = document.getElementById('voice-listening-indicator');
     if (indicator) indicator.remove();
 
-    // युझर न बोलल्यास बॉटकडून मेसेज दाखवा
     addMessage('🎤 आवाज समजला नाही. पुन: प्रयत्न करा.', 'bot');
   };
 
@@ -1193,14 +1204,14 @@ function toggleVoice(){
     isRecording = false;
     btn.textContent = '🎤';
     btn.classList.remove('recording');
+    if(speechTimer) clearTimeout(speechTimer);
 
-    // "ऐकत आहे..." इंडिकेटर शिल्लक असल्यास काढून टाका
     const indicator = document.getElementById('voice-listening-indicator');
     if (indicator) indicator.remove();
 
     const finalQuery = inp.value.trim();
     if (finalQuery !== '') {
-      handleSend(); // युझरने बोललेला प्रश्न चॅटमध्ये पाठवा
+      handleSend(); // Query chatbox me bhej do
     }
   };
 
@@ -1211,6 +1222,7 @@ function toggleVoice(){
     isRecording = false;
     btn.textContent = '🎤';
     btn.classList.remove('recording');
+    if(speechTimer) clearTimeout(speechTimer);
     
     const indicator = document.getElementById('voice-listening-indicator');
     if (indicator) indicator.remove();
