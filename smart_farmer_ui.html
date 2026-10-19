@@ -1103,22 +1103,21 @@ function removeAttachedImage() {
   if (inp) inp.placeholder = 'प्रश्न विचारा...';
 }
 
-// VOICE INPUT & OUTPUT FIX
+// VOICE INPUT 
 let isRecording = false;
 let recognition = null;
 
 function toggleVoice(){
   const btn = document.getElementById('voice-btn');
+  
   if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
     addMessage('⚠️ Voice recognition Chrome मध्येच कार्य करते.','bot');
     return;
   }
 
+  // १. जर आधीच रेकॉर्डिंग चालू असेल तर थांबवा
   if(isRecording){
     if(recognition) recognition.stop();
-    btn.textContent = '🎤';
-    btn.classList.remove('recording');
-    isRecording = false;
     return;
   }
 
@@ -1128,6 +1127,8 @@ function toggleVoice(){
   recognition.interimResults = false;
   recognition.maxAlternatives = 1;
 
+  addMessage('🎤 ऐकत आहे... बोला! 😊', 'bot');
+
   recognition.onstart = () => {
     isRecording = true;
     btn.textContent = '⏹';
@@ -1135,12 +1136,16 @@ function toggleVoice(){
   };
 
   recognition.onresult = (event) => {
-    document.getElementById('inp').value = event.results[0][0].transcript;
-    handleSend();
+    const transcript = event.results[0][0].transcript;
+    if (transcript && transcript.trim() !== '') {
+      document.getElementById('inp').value = transcript;
+      handleSend(); // बोललेले वाक्य चॅटमध्ये पाठवा
+    }
   };
 
   recognition.onerror = (event) => {
     console.error('Speech recognition error:', event);
+    addMessage('🎤 आवाज समजला नाही. पुन: प्रयत्न करा.', 'bot');
   };
 
   recognition.onend = () => {
@@ -1149,7 +1154,15 @@ function toggleVoice(){
     btn.classList.remove('recording');
   };
 
-  recognition.start();
+  try {
+    recognition.start();
+  } catch(e) {
+    console.error("Speech Start Error:", e);
+    isRecording = false;
+    btn.textContent = '🎤';
+    btn.classList.remove('recording');
+    addMessage('🎤 आवाज समजला नाही. पुन: प्रयत्न करा.', 'bot');
+  }
 }
 function stopVoiceOutput() {
   if (window.speechSynthesis) {
